@@ -14,6 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+      </head>
       <body>
         <MaterialUIProvider>
           {children}
