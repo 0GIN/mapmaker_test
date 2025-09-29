@@ -12,11 +12,7 @@ import {
   Stack,
   Chip
 } from '@mui/material';
-import { 
-  Home as HomeIcon, 
-  Build as BuildIcon, 
-  Analytics as AnalyticsIcon 
-} from '@mui/material/icons-material';
+import { Home as HomeIcon, Build as BuildIcon, Analytics as AnalyticsIcon } from '@mui/icons-material';
 
 export default function HomePage() {
   return (
