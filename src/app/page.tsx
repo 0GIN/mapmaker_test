@@ -11,8 +11,15 @@ import {
   ListItemIcon,
   Typography,
   Divider,
-  Tooltip
+  Tooltip,
+  TextField,
+  MenuItem,
+  Button
 } from '@mui/material';
+import { useOptimisticLayers } from '@/hooks/useOptimisticLayers';
+import { Warstwa } from '@/hooks/useLayersApi';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { 
   Menu as MenuIcon,
   Close as CloseIcon,
@@ -48,14 +55,7 @@ import {
   ViewList as ViewListIcon
 } from '@mui/icons-material';
 
-interface Warstwa {
-  id: string;
-  nazwa: string;
-  widoczna: boolean;
-  typ: 'grupa' | 'wektor' | 'raster';
-  dzieci?: Warstwa[];
-  rozwinięta?: boolean;
-}
+// Interface przeniesiony do hooks/useLayersApi.ts
 
 declare global {
   interface Window {
@@ -64,6 +64,7 @@ declare global {
 }
 
 export default function HomePage() {
+  // UI State
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -71,6 +72,26 @@ export default function HomePage() {
   const [dropPosition, setDropPosition] = useState<'before' | 'after'>('before');
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<'wszystko' | 'wektor' | 'raster' | 'wms'>('wszystko');
+
+  // Stan dla rozwijanych sekcji w panelu właściwości
+  const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({
+    'informacje-ogolne': false,
+    'pobieranie': false,
+    'widocznosc': false,
+    'informacje-szczegolowe': false,
+    'informacje-szczegolowe-grupa': false,
+    'uslugi': false,
+    'metadane': false,
+    'inne-projekty': false,
+    // Sekcje dla warstwy (z prefiksem warstwy-)
+    'warstwa-informacje-ogolne': false,
+    'warstwa-pobieranie': false,
+    'warstwa-widocznosc': false,
+    'warstwa-informacje-szczegolowe': false
+  });
+
+  // Tymczasowo używamy warstw na sztywno
+  const [selectedLayer, setSelectedLayer] = useState<Warstwa | null>(null);
   const [warstwy, setWarstwy] = useState<Warstwa[]>([
     {
       id: 'obszar-rewitalizacji',
@@ -131,7 +152,7 @@ export default function HomePage() {
     console.log('🎯 Warstwy state changed:', warstwy.map(w => w.nazwa));
   }, [warstwy]);
 
-  const toggleWarstwaVisibility = (id: string) => {
+  const toggleVisibility = (id: string) => {
     const updateWarstwy = (warstwy: Warstwa[]): Warstwa[] => {
       return warstwy.map(warstwa => {
         if (warstwa.id === id) {
@@ -153,7 +174,7 @@ export default function HomePage() {
     setWarstwy(updateWarstwy(warstwy));
   };
 
-  const toggleWarstwaExpansion = (id: string) => {
+  const toggleExpansion = (id: string) => {
     const updateExpansion = (warstwy: Warstwa[]): Warstwa[] => {
       return warstwy.map(warstwa => {
         if (warstwa.id === id && warstwa.typ === 'grupa') {
@@ -168,7 +189,14 @@ export default function HomePage() {
     setWarstwy(updateExpansion(warstwy));
   };
 
-  const getWarstwaIcon = (typ: Warstwa['typ'], id?: string) => {
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  const getWarstwaIcon = (typ: 'grupa' | 'wektor' | 'raster', id?: string) => {
     switch (typ) {
       case 'grupa': return <FolderIcon sx={{ color: '#4fc3f7' }} />; // Niebieska ikona folderu dla katalogów
       case 'wektor': return <LayersIcon sx={{ color: '#81c784' }} />; // Zielona ikona dla warstw wektorowych
@@ -188,6 +216,23 @@ export default function HomePage() {
       ...warstwa,
       dzieci: warstwa.dzieci ? filterWarstwy(warstwa.dzieci, filter) : undefined
     }));
+  };
+
+  const findLayerById = (layers: Warstwa[], id: string): Warstwa | null => {
+    for (const layer of layers) {
+      if (layer.id === id) return layer;
+      if (layer.dzieci) {
+        const found = findLayerById(layer.dzieci, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const handleLayerSelect = (id: string) => {
+    const layer = findLayerById(warstwy, id);
+    setSelectedLayer(layer);
+    console.log('Selected layer:', layer?.nazwa);
   };
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -458,7 +503,7 @@ export default function HomePage() {
     setDropPosition('before');
   };
 
-  const renderWarstwaItem = (warstwa: Warstwa, level: number = 0): React.ReactNode => {
+  const renderWarstwaItem = (warstwa: any, level: number = 0): React.ReactNode => {
     const isDragged = draggedItem === warstwa.id;
     const isDropTarget = dropTarget === warstwa.id;
     
@@ -528,6 +573,7 @@ export default function HomePage() {
         <Box
           className="layer-item"
           draggable
+          onClick={() => handleLayerSelect(warstwa.id)}
           onDragStart={(e) => handleDragStart(e, warstwa.id)}
           onDragEnd={handleDragEnd}
           onDragEnter={(e) => handleDragEnter(e, warstwa.id)}
@@ -541,13 +587,15 @@ export default function HomePage() {
             px: 1,
             ml: level * 1.5,
             borderRadius: 4,
-            cursor: isDragged ? 'grabbing' : 'grab',
+            cursor: isDragged ? 'grabbing' : 'pointer',
             transition: 'all 0.2s ease',
             bgcolor: isDragged ? 'rgba(79, 195, 247, 0.3)' : 
-                     isDropTarget ? 'rgba(76, 175, 80, 0.2)' : 'transparent',
+                     isDropTarget ? 'rgba(76, 175, 80, 0.2)' : 
+                     selectedLayer?.id === warstwa.id ? 'rgba(255, 152, 0, 0.2)' : 'transparent',
             borderLeft: level > 0 ? '2px solid rgba(255,255,255,0.1)' : 'none',
             border: isDragged ? '2px dashed #4fc3f7' : 
-                    isDropTarget ? '2px solid #4caf50' : 'none',
+                    isDropTarget ? '2px solid #4caf50' : 
+                    selectedLayer?.id === warstwa.id ? '2px solid #ff9800' : 'none',
             opacity: isDragged ? 0.6 : 1,
             transform: isDragged ? 'scale(1.02) rotate(2deg)' : 'none',
             boxShadow: isDragged ? '0 8px 16px rgba(0,0,0,0.3)' : 
@@ -570,7 +618,7 @@ export default function HomePage() {
         {/* Drag handle */}
         {warstwa.typ === 'grupa' && (
           <Box
-            onClick={() => toggleWarstwaExpansion(warstwa.id)}
+            onClick={() => toggleExpansion(warstwa.id)}
             sx={{
               width: 16,
               height: 16,
@@ -601,7 +649,7 @@ export default function HomePage() {
           component="input"
           type="checkbox"
           checked={warstwa.widoczna}
-          onChange={() => toggleWarstwaVisibility(warstwa.id)}
+          onChange={() => toggleVisibility(warstwa.id)}
           sx={{
             mr: 1,
             cursor: 'pointer',
@@ -687,7 +735,7 @@ export default function HomePage() {
       
       {warstwa.dzieci && warstwa.rozwinięta && (
         <Box sx={{ ml: 1 }}>
-          {warstwa.dzieci.map(dziecko => renderWarstwaItem(dziecko, level + 1))}
+          {warstwa.dzieci.map((dziecko: any) => renderWarstwaItem(dziecko, level + 1))}
           
           {/* Specjalna strefa drop na końcu grupy */}
           <Box
@@ -860,7 +908,9 @@ export default function HomePage() {
           boxShadow: sidebarCollapsed ? 'none' : '2px 0 12px rgba(0,0,0,0.4)',
           transition: 'left 0.3s ease',
           zIndex: 1200,
-          borderRight: sidebarCollapsed ? 'none' : '1px solid rgba(255, 255, 255, 0.2)'
+          borderRight: sidebarCollapsed ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
         <Box className="layer-panel__header" sx={{ 
@@ -1177,12 +1227,21 @@ export default function HomePage() {
 
         </Box>
 
-        <Box 
-          className="layer-tree"
-          sx={{ 
-            flex: 1,
-            overflow: 'auto',
-            p: 1,
+        {/* Kontener dla listy warstw i panelu właściwości */}
+        <Box sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden'
+        }}>
+          <Box 
+            className="layer-tree"
+            sx={{ 
+              flex: selectedLayer ? '1 1 0%' : 1,
+              minHeight: 0,
+              overflow: 'auto',
+              p: 1,
             '&::-webkit-scrollbar': {
               width: '6px'
             },
@@ -1197,6 +1256,542 @@ export default function HomePage() {
         >
           {filteredWarstwy.map(warstwa => renderWarstwaItem(warstwa))}
         </Box>
+
+        {/* Panel właściwości w sidebarze - zawsze widoczny */}
+        <Box
+          sx={{
+            flexShrink: 0,
+            bgcolor: 'rgba(50, 50, 50, 0.95)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '250px',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Nagłówek panelu właściwości */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              p: 1.5,
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              bgcolor: 'rgba(40, 40, 40, 0.9)'
+            }}
+          >
+            <Typography
+              sx={{
+                color: 'white',
+                fontSize: '12px',
+                fontWeight: 500,
+                flex: 1
+              }}
+            >
+              {selectedLayer 
+                ? `Właściwości ${selectedLayer.typ === 'grupa' ? 'grupy' : 'warstwy'}`
+                : 'Właściwości projektu'
+              }
+            </Typography>
+            {selectedLayer && (
+              <IconButton
+                size="small"
+                onClick={() => setSelectedLayer(null)}
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  p: 0.5,
+                  '&:hover': { color: '#ff6b6b' }
+                }}
+              >
+                <CloseIcon sx={{ fontSize: '14px' }} />
+              </IconButton>
+            )}
+          </Box>
+
+          {/* Zawartość panelu właściwości */}
+          <Box sx={{ flex: 1, p: 1.5, overflow: 'auto' }}>
+            {selectedLayer ? (
+              <>
+                
+                {/* Właściwości warstwy - prosty styl jak na screenshotach */}
+                
+                {/* Sekcja: Informacje ogólne */}
+                <Box sx={{ mb: 1.5 }}>
+                  <Box
+                    onClick={() => toggleSection('warstwa-informacje-ogolne')}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      mb: 1,
+                      '&:hover': { color: '#4fc3f7' }
+                    }}
+                  >
+                    {expandedSections['warstwa-informacje-ogolne'] ? 
+                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                    }
+                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                      Informacje ogólne
+                    </Typography>
+                  </Box>
+                  
+                  {expandedSections['warstwa-informacje-ogolne'] && (
+                    <Box sx={{ ml: 2, mt: 1 }}>
+                      <Box sx={{ mb: 1 }}>
+                        <Typography sx={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.7)' }}>
+                          Nazwa
+                        </Typography>
+                        <Typography sx={{ fontSize: '11px', color: 'white', fontStyle: 'italic', mt: 0.5 }}>
+                          {selectedLayer.nazwa}
+                        </Typography>
+                      </Box>
+                      
+                      <Box>
+                        <Typography sx={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.7)' }}>
+                          Grupa
+                        </Typography>
+                        <Typography sx={{ fontSize: '11px', color: 'white', fontStyle: 'italic', mt: 0.5 }}>
+                          {selectedLayer.typ === 'grupa' ? 'Brak grupy nadrzędnej' : 'Brak grupy nadrzędnej'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Sekcja: Pobieranie */}
+                <Box sx={{ mb: 1.5 }}>
+                  <Box
+                    onClick={() => toggleSection('warstwa-pobieranie')}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      mb: 1,
+                      '&:hover': { color: '#4fc3f7' }
+                    }}
+                  >
+                    {expandedSections['warstwa-pobieranie'] ? 
+                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                    }
+                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                      Pobieranie
+                    </Typography>
+                    <Box sx={{ 
+                      ml: 1, 
+                      width: 14, 
+                      height: 14, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      bgcolor: 'rgba(100, 100, 100, 0.8)',
+                      borderRadius: '2px',
+                      border: '1px solid rgba(255,255,255,0.2)'
+                    }}>
+                      <Box sx={{ 
+                        width: 6, 
+                        height: 6, 
+                        bgcolor: 'rgba(255, 255, 255, 0.4)', 
+                        borderRadius: '1px'
+                      }} />
+                    </Box>
+                  </Box>
+                  
+                  {expandedSections['warstwa-pobieranie'] && (
+                    <Box sx={{ ml: 2, mt: 1 }}>
+                      <Typography sx={{ 
+                        fontSize: '10px', 
+                        color: 'rgba(255, 255, 255, 0.8)', 
+                        mb: 1,
+                        fontStyle: 'italic'
+                      }}>
+                        Poniższe funkcje dostępne są w trybie edycji po zalogowaniu
+                      </Typography>
+                      
+                      <Box sx={{ ml: 0.5 }}>
+                        <Typography sx={{ 
+                          fontSize: '10px', 
+                          color: 'rgba(255, 255, 255, 0.6)', 
+                          mb: 0.5 
+                        }}>
+                          Warstwa
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Sekcja: Widoczność */}
+                <Box sx={{ mb: 1.5 }}>
+                  <Box
+                    onClick={() => toggleSection('warstwa-widocznosc')}
+                    sx={{
+                      display: 'flex',
+                      alignItems:'center',
+                      cursor: 'pointer',
+                      mb: 1,
+                      '&:hover': { color: '#4fc3f7' }
+                    }}
+                  >
+                    {expandedSections['warstwa-widocznosc'] ? 
+                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                    }
+                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                      Widoczność
+                    </Typography>
+                  </Box>
+                  
+                  {expandedSections['warstwa-widocznosc'] && (
+                    <Box sx={{ ml: 2, mt: 1 }}>
+                      <Typography sx={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Ustawienia widoczności warstwy
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Sekcja: Informacje szczegółowe */}
+                <Box sx={{ mb: 1.5 }}>
+                  <Box
+                    onClick={() => toggleSection('warstwa-informacje-szczegolowe')}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      mb: 1,
+                      '&:hover': { color: '#4fc3f7' }
+                    }}
+                  >
+                    {expandedSections['warstwa-informacje-szczegolowe'] ? 
+                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                    }
+                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                      Informacje szczegółowe
+                    </Typography>
+                  </Box>
+                  
+                  {expandedSections['warstwa-informacje-szczegolowe'] && (
+                    <Box sx={{ ml: 2, mt: 1 }}>
+                      <Typography sx={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Szczegóły warstwy
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              </>
+            ) : (
+              <>
+                {/* Widok domyślny - Właściwości projektu */}
+                <Box sx={{ mb: 1.5 }}>
+                  <Box
+                    onClick={() => toggleSection('uslugi')}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      mb: 1,
+                      '&:hover': { color: '#4fc3f7' }
+                    }}
+                  >
+                    {expandedSections['uslugi'] ? 
+                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                    }
+                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                      Usługi
+                    </Typography>
+                  </Box>
+                  
+                  {expandedSections['uslugi'] && (
+                    <Box sx={{ ml: 2 }}>
+                      <Typography sx={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', mb: 1, fontStyle: 'italic' }}>
+                        Brak udostępnionych usług
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+
+                <Box sx={{ mb: 1.5 }}>
+                  <Box
+                    onClick={() => toggleSection('pobieranie')}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      mb: 1,
+                      '&:hover': { color: '#4fc3f7' }
+                    }}
+                  >
+                    {expandedSections['pobieranie'] ? 
+                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                    }
+                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                      Pobieranie
+                    </Typography>
+                  </Box>
+                  
+                  {expandedSections['pobieranie'] && (
+                    <Box sx={{ ml: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(79, 195, 247, 0.2)',
+                          border: '1px solid rgba(79, 195, 247, 0.4)',
+                          borderRadius: '4px',
+                          px: 1.5,
+                          py: 0.5,
+                          cursor: 'pointer',
+                          fontSize: '10px',
+                          color: '#4fc3f7',
+                          fontWeight: 500,
+                          '&:hover': {
+                            bgcolor: 'rgba(79, 195, 247, 0.3)',
+                          }
+                        }}
+                        onClick={() => console.log('QGS/QGZ clicked')}
+                      >
+                        QGS/QGZ
+                      </Box>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(79, 195, 247, 0.2)',
+                          border: '1px solid rgba(79, 195, 247, 0.4)',
+                          borderRadius: '4px',
+                          px: 1.5,
+                          py: 0.5,
+                          cursor: 'pointer',
+                          fontSize: '10px',
+                          color: '#4fc3f7',
+                          fontWeight: 500,
+                          '&:hover': {
+                            bgcolor: 'rgba(79, 195, 247, 0.3)',
+                          }
+                        }}
+                        onClick={() => console.log('Zbiór APP clicked')}
+                      >
+                        Zbiór APP
+                      </Box>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(79, 195, 247, 0.2)',
+                          border: '1px solid rgba(79, 195, 247, 0.4)',
+                          borderRadius: '4px',
+                          px: 1.5,
+                          py: 0.5,
+                          cursor: 'pointer',
+                          fontSize: '10px',
+                          color: '#4fc3f7',
+                          fontWeight: 500,
+                          '&:hover': {
+                            bgcolor: 'rgba(79, 195, 247, 0.3)',
+                          }
+                        }}
+                        onClick={() => console.log('Metadane clicked')}
+                      >
+                        Metadane
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
+                <Box sx={{ mb: 1.5 }}>
+                  <Box
+                    onClick={() => toggleSection('metadane')}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      mb: 1,
+                      '&:hover': { color: '#4fc3f7' }
+                    }}
+                  >
+                    {expandedSections['metadane'] ? 
+                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                    }
+                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                      Metadane
+                    </Typography>
+                  </Box>
+                  
+                  {expandedSections['metadane'] && (
+                    <Box sx={{ ml: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(156, 39, 176, 0.2)',
+                          border: '1px solid rgba(156, 39, 176, 0.4)',
+                          borderRadius: '4px',
+                          px: 1.5,
+                          py: 0.5,
+                          cursor: 'pointer',
+                          fontSize: '10px',
+                          color: '#ab47bc',
+                          fontWeight: 500,
+                          '&:hover': {
+                            bgcolor: 'rgba(156, 39, 176, 0.3)',
+                          }
+                        }}
+                        onClick={() => console.log('Wyświetl clicked')}
+                      >
+                        Wyświetl
+                      </Box>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(63, 81, 181, 0.2)',
+                          border: '1px solid rgba(63, 81, 181, 0.4)',
+                          borderRadius: '4px',
+                          px: 1.5,
+                          py: 0.5,
+                          cursor: 'pointer',
+                          fontSize: '10px',
+                          color: '#5c6bc0',
+                          fontWeight: 500,
+                          '&:hover': {
+                            bgcolor: 'rgba(63, 81, 181, 0.3)',
+                          }
+                        }}
+                        onClick={() => console.log('Wyszukaj clicked')}
+                      >
+                        Wyszukaj
+                      </Box>
+                      <Box
+                        sx={{
+                          bgcolor: 'rgba(76, 175, 80, 0.2)',
+                          border: '1px solid rgba(76, 175, 80, 0.4)',
+                          borderRadius: '4px',
+                          px: 1.5,
+                          py: 0.5,
+                          cursor: 'pointer',
+                          fontSize: '10px',
+                          color: '#66bb6a',
+                          fontWeight: 500,
+                          '&:hover': {
+                            bgcolor: 'rgba(76, 175, 80, 0.3)',
+                          }
+                        }}
+                        onClick={() => console.log('Stwórz clicked')}
+                      >
+                        Stwórz
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
+                <Box>
+                  <Box
+                    onClick={() => toggleSection('inne-projekty')}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      '&:hover': { color: '#4fc3f7' }
+                    }}
+                  >
+                    {expandedSections['inne-projekty'] ? 
+                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                    }
+                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                      Inne projekty użytkownika
+                    </Typography>
+                  </Box>
+                  
+                  {expandedSections['inne-projekty'] && (
+                    <Box sx={{ ml: 2 }}>
+                      <Typography sx={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', fontStyle: 'italic' }}>
+                        Brak innych projektów
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              </>
+            )}
+          </Box>
+        </Box>
+
+        {/* Wybór mapy podkładowej na dole sidebara - pod panelem właściwości */}
+        <Box
+          sx={{
+            flexShrink: 0,
+            bgcolor: 'rgba(50, 50, 50, 0.95)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+            p: 1.5,
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          <Typography sx={{ 
+            fontSize: '11px', 
+            fontWeight: 500, 
+            color: 'white', 
+            mb: 1 
+          }}>
+            Wybór mapy podkładowej
+          </Typography>
+          
+          <TextField
+            select
+            defaultValue="google-maps"
+            size="small"
+            fullWidth
+            onChange={(e) => console.log('Selected basemap:', e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: 'rgba(40, 40, 40, 0.9)',
+                color: 'white',
+                fontSize: '10px',
+                '& fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#4fc3f7',
+                },
+              },
+              '& .MuiSelect-icon': {
+                color: 'rgba(255, 255, 255, 0.6)',
+              },
+              '& .MuiInputBase-input': {
+                padding: '6px 12px !important',
+              }
+            }}
+          >
+            <MenuItem value="google-maps" sx={{ fontSize: '10px' }}>
+              Google Maps
+            </MenuItem>
+            <MenuItem value="openstreetmap" sx={{ fontSize: '10px' }}>
+              OpenStreetMap
+            </MenuItem>
+            <MenuItem value="satellite" sx={{ fontSize: '10px' }}>
+              Satelita
+            </MenuItem>
+            <MenuItem value="terrain" sx={{ fontSize: '10px' }}>
+              Teren
+            </MenuItem>
+            <MenuItem value="hybrid" sx={{ fontSize: '10px' }}>
+              Hybrydowa
+            </MenuItem>
+          </TextField>
+          
+          <Typography sx={{ 
+            fontSize: '9px', 
+            color: 'rgba(255, 255, 255, 0.6)', 
+            mt: 1,
+            fontWeight: 500,
+            cursor: 'pointer',
+            '&:hover': {
+              color: '#4fc3f7'
+            }
+          }}>
+            Rozpocznij poradnik
+          </Typography>
+        </Box>
+        </Box>
       </Box>
 
       <Box
@@ -1208,6 +1803,8 @@ export default function HomePage() {
         }}
       >
       </Box>
+
+
     </Box>
   );
 }
