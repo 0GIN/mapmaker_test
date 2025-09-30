@@ -624,18 +624,24 @@ export default function HomePage() {
           {getWarstwaIcon(warstwa.typ, warstwa.id)}
         </Box>
         
-        <Typography
-          sx={{
-            fontSize: '13px',
-            color: warstwa.widoczna ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
-            flex: 1,
-            fontWeight: warstwa.typ === 'grupa' ? 500 : 400,
-            letterSpacing: '0.2px',
-            fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'
-          }}
-        >
-          {warstwa.nazwa}
-        </Typography>
+        <Tooltip title={warstwa.nazwa} arrow placement="top">
+          <Typography
+            sx={{
+              fontSize: '13px',
+              color: warstwa.widoczna ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
+              flex: 1,
+              fontWeight: warstwa.typ === 'grupa' ? 500 : 400,
+              letterSpacing: '0.2px',
+              fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+              whiteSpace: 'nowrap',        // Nie zawijaj tekstu
+              overflow: 'hidden',          // Ukryj nadmiar tekstu
+              textOverflow: 'ellipsis',    // Pokaż ... dla przyciętego tekstu
+              cursor: 'pointer'            // Pokaż że można najechać
+            }}
+          >
+            {warstwa.nazwa}
+          </Typography>
+        </Tooltip>
         
         {/* Ikony po prawej stronie jak na screenie */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -875,7 +881,7 @@ export default function HomePage() {
               textTransform: 'lowercase'
             }}
           >
-            ogrodzieniecesip
+            nazwatestowa.pl
           </Typography>
 
               {/* Toolbar z 9 ikonami w jednym rzędzie */}

@@ -1,6 +1,6 @@
-# 🗺️ MapMaker Test
+# 🗺️ MapMaker Test - GIS Layer Management App
 
-> **Nowoczesna aplikacja webowa** zbudowana z myślą o profesjonalnym rozwoju i skalowalności
+> **Profesjonalna aplikacja GIS** z zaawansowanym systemem zarządzania warstwami i intuicyjnym interfejsem
 
 <div align="center">
 
@@ -11,16 +11,17 @@
 
 </div>
 
-## ✨ Dlaczego MapMaker Test?
+## ✨ O Aplikacji
 
-Ten projekt to **więcej niż starter template** - to **kompletne rozwiązanie** dla nowoczesnych aplikacji webowych. Łączy najlepsze praktyki development-u z eleganckim designem Material-UI.
+Ta aplikacja to **zaawansowany system GIS** z profesjonalnym interfejsem do zarządzania warstwami geograficznymi. Inspirowany najlepszymi rozwiązaniami branżowymi, oferuje intuicyjne narzędzia do pracy z danymi przestrzennymi.
 
-### 🎯 **Główne zalety:**
-- 🚀 **Błyskawiczny start** - wszystko skonfigurowane out-of-the-box
-- 🎨 **Piękny design** - Material-UI z custom theme
-- 💪 **Type Safety** - pełna integracja TypeScript
-- 📱 **Responsive** - działa na wszystkich urządzeniach  
-- 🔧 **Developer Friendly** - zorganizowana struktura i narzędzia
+### 🎯 **Kluczowe funkcje:**
+- �️ **Hierarchiczne menu warstw** z grupami i podgrupami
+- 🔄 **Drag & Drop** z precyzyjnym pozycjonowaniem
+- 👁️ **Zarządzanie widocznością** warstw i grup
+- � **Wyszukiwanie** warstw w czasie rzeczywistym
+- 📱 **Responsive design** dostosowany do wszystkich urządzeń  
+- ⚡ **Intuitive UX** wzorowany na profesjonalnych narzędziach GIS
 
 ## �️ Tech Stack
 
@@ -157,78 +158,117 @@ yarn install && yarn dev
 </tr>
 </table>
 
-### 💡 **Jak używać Material-UI?**
+### 💡 **Przykład struktury warstwy GIS:**
 
 ```tsx
-// Importuj komponenty MUI
-import { Button, Card, Typography, Box } from '@mui/material';
-import { Home as HomeIcon } from '@mui/material/icons-material';
-
-// Używaj w swoich komponentach
-export default function MyComponent() {
-  return (
-    <Card sx={{ p: 3 }}>
-      <Box display="flex" alignItems="center" gap={1}>
-        <HomeIcon color="primary" />
-        <Typography variant="h5">Ładny design!</Typography>
-      </Box>
-      <Button variant="contained" fullWidth>
-        Kliknij mnie
-      </Button>
-    </Card>
-  );
+interface Warstwa {
+  id: string;
+  nazwa: string;
+  widoczna: boolean;
+  typ: 'grupa' | 'wektor' | 'raster';
+  dzieci?: Warstwa[];
+  rozwinięta?: boolean;
 }
+
+// Przykład hierarchii warstw
+const warstwyGIS: Warstwa[] = [
+  {
+    id: 'obszar-rewitalizacji',
+    nazwa: 'Obszar Rewitalizacji',
+    widoczna: true,
+    typ: 'grupa',
+    rozwinięta: true,
+    dzieci: [
+      {
+        id: 'miejscowe-plany',
+        nazwa: 'MIEJSCOWE PLANY ZAGOSPODAROWANIA...',
+        widoczna: true,
+        typ: 'grupa',
+        dzieci: [
+          { id: 'plan-1', nazwa: 'XXVII_282_2001', widoczna: true, typ: 'wektor' }
+        ]
+      }
+    ]
+  }
+];
 ```
 
-## ✨ Kluczowe Features
+## ✨ Funkcje GIS
 
 <div align="center">
 
-### 🎁 **Co otrzymujesz out-of-the-box?**
+### 🎁 **Zaawansowane możliwości zarządzania warstwami**
 
 </div>
 
 | Feature | Opis | Status |
 |---------|------|--------|
-| 🏗️ **Professional Architecture** | Scalable folder structure + separation of concerns | ✅ Ready |
-| 🎨 **Material-UI Integration** | Complete theme system + 140+ components | ✅ Ready |
-| 💎 **TypeScript Everything** | Full type safety + IntelliSense support | ✅ Ready |
-| 🎣 **Custom Hooks** | `useLocalStorage`, `useDebounce`, `useMediaQuery` | ✅ Ready |
-| 🔧 **Utility Functions** | Date formatting, validation, API client | ✅ Ready |
-| 📱 **Responsive Design** | Mobile-first + MUI breakpoints | ✅ Ready |
-| ⚡ **Developer Experience** | ESLint + Path aliases + Auto-complete | ✅ Ready |
-| 🌙 **Dark/Light Theme** | Theme switching foundation | 🔄 Setup ready |
+| 🗂️ **Hierarchiczne Menu Warstw** | Wielopoziomowa struktura grup i warstw | ✅ Ready |
+| 🔄 **Precision Drag & Drop** | Precyzyjne sortowanie z wizualnymi wskaźnikami | ✅ Ready |
+| 👁️ **Zarządzanie Widocznością** | Toggle visibility dla warstw i grup | ✅ Ready |
+| � **Live Search** | Wyszukiwanie warstw w czasie rzeczywistym | ✅ Ready |
+| 📋 **Smart Tooltips** | Pełne nazwy warstw przy obcięciu tekstu | ✅ Ready |
+| � **Action Buttons** | Przybliżanie, tabele atrybutów, zarządzanie | ✅ Ready |
+| 🎨 **Professional UI** | Wzorowany na oprogramowaniu GIS | ✅ Ready |
+| 📱 **Responsive Design** | Dostosowany do urządzeń mobilnych | ✅ Ready |
+| ⚡ **Performance Optimized** | Smooth animations i interactions | ✅ Ready |
+| 🔧 **Developer Tools** | TypeScript + ESLint + organized structure | ✅ Ready |
 
-### 🚀 **Dlaczego to ma znaczenie?**
+### 🚀 **Dlaczego wybrać tę aplikację GIS?**
 
 <table>
 <tr>
 <td width="33%">
 
-**⚡ Szybkość**
-- Zero konfiguracji
-- Instant development 
-- Best practices wbudowane
+**⚡ Profesjonalny UX**
+- Intuicyjny interface
+- Smooth animations 
+- Responsive design
 
 </td>
 <td width="33%">
 
-**📈 Skalowalność** 
-- Enterprise-grade structure
-- Modular components
-- Type-safe codebase
+**📈 Zaawansowane funkcje** 
+- Hierarchiczne warstwy
+- Precision drag & drop
+- Smart search & tooltips
 
 </td>
 <td width="33%">
 
-**😍 Developer Joy**
-- Intuitive organization
-- Great IntelliSense
-- Modern tooling
+**� Developer Friendly**
+- TypeScript safety
+- Clean architecture
+- Easy customization
 
 </td>
 </tr>
 </table>
+
+## 📸 Screenshots
+
+### 🗂️ **Główny Interface - Menu Warstw**
+
+Aplikacja prezentuje profesjonalne menu warstw z:
+- **Hierarchiczną strukturą** grup i podgrup
+- **Checkboxami widoczności** dla każdej warstwy
+- **Ikonami akcji** (zoom, tabela atrybutów)
+- **Live search** z filtrowaniem
+- **Toolbar z narzędziami** do zarządzania warstwami
+
+### 🔄 **Drag & Drop System**
+
+- **Precyzyjne pozycjonowanie** z wizualną kreską drop
+- **Real-time feedback** podczas przeciągania
+- **Możliwość upuszczania na koniec** grup
+- **Smooth animations** i transitions
+
+### 📱 **Responsive Design**
+
+Interface dostosowuje się do:
+- **Desktop** - pełna funkcjonalność
+- **Tablet** - zoptymalizowane menu
+- **Mobile** - collapsible sidebar
 
 ## 🔧 Configuration Files
 
@@ -247,47 +287,37 @@ export default function MyComponent() {
 - App Router enabled
 - Production optimizations
 
-## 💡 Przykłady Użycia
+## 💡 Użycie Aplikacji
 
-### 🎨 **Material-UI Components**
+### 🗂️ **Zarządzanie Warstwami GIS**
 
 <details>
-<summary><strong>Kliknij aby zobaczyć przykłady</strong></summary>
+<summary><strong>Kliknij aby zobaczyć funkcje</strong></summary>
 
-```tsx
-import { 
-  Button, Card, Typography, Box, Stack, Chip 
-} from '@mui/material';
-import { Star as StarIcon } from '@mui/material/icons-material';
+#### **Podstawowe operacje:**
 
-export default function BeautifulCard() {
-  return (
-    <Card elevation={3} sx={{ p: 3, borderRadius: 2 }}>
-      <Stack spacing={2}>
-        <Box display="flex" alignItems="center" gap={1}>
-          <StarIcon color="primary" />
-          <Typography variant="h5" fontWeight="bold">
-            Awesome Feature
-          </Typography>
-          <Chip label="New" color="secondary" size="small" />
-        </Box>
-        
-        <Typography color="text.secondary">
-          Material-UI makes beautiful interfaces effortless!
-        </Typography>
-        
-        <Button 
-          variant="contained" 
-          fullWidth 
-          sx={{ borderRadius: 2 }}
-        >
-          Try it now
-        </Button>
-      </Stack>
-    </Card>
-  );
-}
-```
+- **👁️ Widoczność warstw**: Kliknij checkbox aby włączyć/wyłączyć warstwę
+- **📁 Rozwijanie grup**: Kliknij strzałkę aby rozwinąć/zwinąć grupę warstw  
+- **🔍 Wyszukiwanie**: Wpisz nazwę w pole search aby znaleźć warstwę
+- **🎯 Akcje warstwy**: 
+  - Ikona celownika - przybliż do warstwy
+  - Ikona kalendarza - pokaż tabelę atrybutów
+
+#### **Drag & Drop funkcje:**
+
+- **🔄 Sortowanie**: Przeciągnij warstwę w nowe miejsce
+- **📍 Precyzyjne pozycjonowanie**: Niebieska kreska pokazuje gdzie warstwa zostanie upuszczona
+- **📂 Przenoszenie między grupami**: Upuść warstwę w innej grupie
+- **🔚 Drop na końcu**: Specjalna strefa na końcu grup dla dodawania na koniec listy
+
+#### **Toolbar akcje:**
+
+- **🌍 Dodaj dane INSPIRE**: Dodawanie warstw z baz europejskich
+- **🗺️ Dodaj dane krajowe**: Dodawanie warstw z baz krajowych
+- **➕ Dodaj warstwę**: Tworzenie nowej warstwy
+- **⬆️ Importuj**: Wczytywanie warstwy z pliku
+- **📁 Dodaj grupę**: Tworzenie nowej grupy
+- **🗑️ Usuń**: Usuwanie zaznaczonej warstwy/grupy
 
 </details>
 
@@ -442,14 +472,18 @@ graph TD
     style F fill:#fce4ec
 ```
 
-### ✅ **TODO Checklist**
+### ✅ **Funkcje Aplikacji**
 
-- [ ] 📦 **Zainstaluj dependencies** - `npm install`
-- [ ] 🎨 **Dostosuj theme** w `src/config/theme.ts` 
-- [ ] 🧩 **Dodaj swoje komponenty** w `src/components/`
-- [ ] 📄 **Stwórz nowe strony** w `src/app/`
-- [ ] 🔐 **Skonfiguruj .env.local** (jeśli potrzebne)
-- [ ] 🚀 **Deploy na Vercel** dla świata!
+- [x] �️ **Menu warstw hierarchiczne** - Struktura grup i podgrup
+- [x] 🔄 **Drag & Drop sorting** - Precyzyjne sortowanie z wizualnymi wskaźnikami
+- [x] 👁️ **Zarządzanie widocznością** - Toggle dla warstw i grup
+- [x] 🔍 **Live search** - Wyszukiwanie w czasie rzeczywistym
+- [x] 📋 **Smart tooltips** - Pełne nazwy przy obciętych tekstach
+- [x] 🎯 **Action buttons** - Zoom, tabele atrybutów, zarządzanie
+- [x] 📱 **Responsive design** - Działa na wszystkich urządzeniach
+- [x] 🎨 **Professional UI** - Wzorowany na oprogramowaniu GIS
+- [ ] �️ **Integracja z mapą** - Wyświetlanie warstw na mapie
+- [ ] � **Save/Load projektu** - Zapisywanie konfiguracji warstw
 
 <div align="center">
 
