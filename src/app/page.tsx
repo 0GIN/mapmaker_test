@@ -68,6 +68,7 @@ export default function HomePage() {
   const [searchFilter, setSearchFilter] = useState('');
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const [dropPosition, setDropPosition] = useState<'before' | 'after'>('before');
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<'wszystko' | 'wektor' | 'raster' | 'wms'>('wszystko');
   const [warstwy, setWarstwy] = useState<Warstwa[]>([
@@ -124,6 +125,11 @@ export default function HomePage() {
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [filterMenuOpen]);
+
+  // Debug - monitoruj zmiany stanu warstwy
+  useEffect(() => {
+    console.log('🎯 Warstwy state changed:', warstwy.map(w => w.nazwa));
+  }, [warstwy]);
 
   const toggleWarstwaVisibility = (id: string) => {
     const updateWarstwy = (warstwy: Warstwa[]): Warstwa[] => {
@@ -185,7 +191,7 @@ export default function HomePage() {
   };
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
-    console.log('Drag started:', id); // Debug
+    console.log('🟢 Drag started:', id);
     setDraggedItem(id);
     e.dataTransfer.effectAllowed = 'move';
   };
@@ -197,88 +203,259 @@ export default function HomePage() {
 
   const handleDragEnter = (e: React.DragEvent, id: string) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('🔵 Drag enter on:', id); // Debug
+    
     if (draggedItem && draggedItem !== id) {
-      setDropTarget(id);
+      // Sprawdź czy nie próbujemy przeciągnąć elementu na samego siebie lub na swoje dziecko
+      const isValidTarget = !isDescendant(draggedItem, id);
+      if (isValidTarget) {
+        // Określ pozycję drop na podstawie pozycji myszy względem elementu
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mouseY = e.clientY;
+        const elementMiddle = rect.top + rect.height / 2;
+        
+        const position = mouseY < elementMiddle ? 'before' : 'after';
+        
+        setDropTarget(id);
+        setDropPosition(position);
+        console.log('✅ Valid target set:', id, 'position:', position);
+      } else {
+        console.log('❌ Invalid target (descendant):', id);
+      }
     }
+  };
+
+  // Funkcja pomocnicza do sprawdzania czy target nie jest dzieckiem dragged item
+  const isDescendant = (parentId: string, childId: string): boolean => {
+    const findInTree = (items: Warstwa[], searchId: string): Warstwa | null => {
+      for (const item of items) {
+        if (item.id === searchId) return item;
+        if (item.dzieci) {
+          const found = findInTree(item.dzieci, searchId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const parent = findInTree(warstwy, parentId);
+    if (!parent || !parent.dzieci) return false;
+
+    const checkChildren = (items: Warstwa[]): boolean => {
+      for (const item of items) {
+        if (item.id === childId) return true;
+        if (item.dzieci && checkChildren(item.dzieci)) return true;
+      }
+      return false;
+    };
+
+    return checkChildren(parent.dzieci);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    // Sprawdź czy naprawdę opuszczamy element
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+    e.preventDefault();
+    // Sprawdź czy naprawdę opuszczamy element (nie przechodzimy do dziecka)
+    const rect = e.currentTarget.getBoundingClientRect();
+    const isLeavingElement = (
+      e.clientX < rect.left || 
+      e.clientX > rect.right || 
+      e.clientY < rect.top || 
+      e.clientY > rect.bottom
+    );
+    
+    if (isLeavingElement) {
       setDropTarget(null);
+      setDropPosition('before');
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, id?: string) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    e.stopPropagation();
+    
+    // WAŻNE: Bez tego onDrop się nie wykonuje!
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+    
+    // Aktualizuj pozycję drop w czasie rzeczywistym podczas przeciągania
+    if (draggedItem && id && id !== draggedItem) {
+      const isValidTarget = !isDescendant(draggedItem, id);
+      if (isValidTarget) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mouseY = e.clientY;
+        const elementMiddle = rect.top + rect.height / 2;
+        
+        const position = mouseY < elementMiddle ? 'before' : 'after';
+        
+        if (dropTarget !== id || dropPosition !== position) {
+          setDropTarget(id);
+          setDropPosition(position);
+        }
+      }
+    }
   };
 
   const handleDrop = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
-    console.log('Drop on:', targetId, 'from:', draggedItem); // Debug
+    e.stopPropagation();
+    
+    console.log('🔴 DROP EVENT FIRED! Target:', targetId, 'Dragged:', draggedItem);
+    
     if (!draggedItem || draggedItem === targetId) {
+      console.log('❌ Invalid drop - same element or no dragged item');
       setDropTarget(null);
       return;
     }
 
-    // Funkcja do znajdowania i usuwania elementu z całej struktury
-    const findAndRemove = (items: Warstwa[], id: string): { found: Warstwa | null, newItems: Warstwa[] } => {
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].id === id) {
-          const found = items[i];
-          const newItems = [...items];
-          newItems.splice(i, 1);
-          return { found, newItems };
+    // Prosta funkcja reorderowania - działa rekursywnie na całej strukturze
+    const reorderItemsInTree = (items: Warstwa[]): Warstwa[] => {
+      // Sprawdź czy oba elementy są na tym poziomie
+      const draggedIndex = items.findIndex(item => item.id === draggedItem);
+      const targetIndex = items.findIndex(item => item.id === targetId);
+      
+      if (draggedIndex !== -1 && targetIndex !== -1) {
+        // Oba elementy są na tym poziomie - reorder
+        const newItems = [...items];
+        const [draggedElement] = newItems.splice(draggedIndex, 1);
+        
+        // Wstaw przed lub po targecie w zależności od dropPosition
+        let insertIndex;
+        if (dropPosition === 'before') {
+          insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+        } else { // 'after'
+          insertIndex = draggedIndex < targetIndex ? targetIndex : targetIndex + 1;
         }
         
-        if (items[i].dzieci && items[i].dzieci!.length > 0) {
-          const result = findAndRemove(items[i].dzieci!, id);
-          if (result.found) {
-            const newItems = [...items];
-            newItems[i] = { ...newItems[i], dzieci: result.newItems };
-            return { found: result.found, newItems };
-          }
-        }
-      }
-      return { found: null, newItems: items };
-    };
-
-    // Funkcja do wstawiania elementu w odpowiednie miejsce
-    const insertAt = (items: Warstwa[], targetId: string, itemToInsert: Warstwa): Warstwa[] => {
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].id === targetId) {
-          const newItems = [...items];
-          newItems.splice(i, 0, itemToInsert);
-          return newItems;
-        }
+        newItems.splice(insertIndex, 0, draggedElement);
         
-        if (items[i].dzieci && items[i].dzieci!.length > 0) {
-          const result = insertAt(items[i].dzieci!, targetId, itemToInsert);
-          if (result !== items[i].dzieci!) {
-            const newItems = [...items];
-            newItems[i] = { ...newItems[i], dzieci: result };
-            return newItems;
-          }
-        }
+        console.log(`Reordered at level: moved ${draggedItem} ${dropPosition} ${targetId}`);
+        return newItems;
       }
-      return items;
+      
+      // Jeśli nie ma na tym poziomie, sprawdź dzieci
+      return items.map(item => ({
+        ...item,
+        dzieci: item.dzieci ? reorderItemsInTree(item.dzieci) : undefined
+      }));
     };
 
-    // Usuń element z obecnej pozycji
-    const removeResult = findAndRemove(warstwy, draggedItem);
+    const newWarstwy = reorderItemsInTree(warstwy);
+    console.log('🟡 Old warstwy:', warstwy);
+    console.log('🟠 New warstwy:', newWarstwy);
+    console.log('🔵 Are they different?', JSON.stringify(warstwy) !== JSON.stringify(newWarstwy));
     
-    if (removeResult.found) {
-      // Wstaw element przed targetet
-      const newWarstwy = insertAt(removeResult.newItems, targetId, removeResult.found);
-      console.log('Reordering successful'); // Debug
+    if (JSON.stringify(warstwy) !== JSON.stringify(newWarstwy)) {
       setWarstwy(newWarstwy);
+      console.log('✅ State updated successfully');
     } else {
-      console.log('Failed to find dragged item'); // Debug
+      console.log('❌ No change in state - reordering failed');
     }
 
     setDraggedItem(null);
     setDropTarget(null);
+    setDropPosition('before');
+  };
+
+  const handleDropAtEnd = (e: React.DragEvent, groupId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!draggedItem) {
+      console.log('❌ No dragged item for end drop');
+      return;
+    }
+
+    console.log(`🎯 Dropping at end of group: ${groupId}, dragged item: ${draggedItem}`);
+
+    // Funkcja do przeniesienia elementu na koniec grupy
+    const moveItemToEndOfGroup = (items: Warstwa[]): Warstwa[] => {
+      const newItems = [...items];
+      
+      // Usuń przeciągnięty element z aktualnej pozycji
+      const removeDraggedItem = (arr: Warstwa[]): Warstwa[] => {
+        return arr.reduce((acc: Warstwa[], item) => {
+          if (item.id === draggedItem) {
+            // Pomijamy ten element (usuwamy go)
+            return acc;
+          }
+          
+          const newItem = {
+            ...item,
+            dzieci: item.dzieci ? removeDraggedItem(item.dzieci) : undefined
+          };
+          acc.push(newItem);
+          return acc;
+        }, []);
+      };
+
+      // Znajdź przeciągnięty element
+      let draggedElement: Warstwa | null = null;
+      const findDraggedElement = (arr: Warstwa[]): void => {
+        arr.forEach(item => {
+          if (item.id === draggedItem) {
+            draggedElement = { ...item };
+          }
+          if (item.dzieci) {
+            findDraggedElement(item.dzieci);
+          }
+        });
+      };
+
+      findDraggedElement(newItems);
+      
+      if (!draggedElement) {
+        console.log('❌ Dragged element not found');
+        return items;
+      }
+
+      // Usuń przeciągnięty element ze struktury
+      const itemsWithoutDragged = removeDraggedItem(newItems);
+
+      // Dodaj element na koniec odpowiedniej grupy
+      const addToEndOfGroup = (arr: Warstwa[]): Warstwa[] => {
+        return arr.map(item => {
+          if (item.id === groupId) {
+            // Znaleźliśmy docelową grupę - dodaj element na koniec jej dzieci
+            const newChildren = item.dzieci ? [...item.dzieci] : [];
+            newChildren.push(draggedElement!);
+            return {
+              ...item,
+              dzieci: newChildren
+            };
+          }
+          
+          if (item.dzieci) {
+            return {
+              ...item,
+              dzieci: addToEndOfGroup(item.dzieci)
+            };
+          }
+          
+          return item;
+        });
+      };
+
+      return addToEndOfGroup(itemsWithoutDragged);
+    };
+
+    const newWarstwy = moveItemToEndOfGroup(warstwy);
+    console.log('🟡 Old warstwy (end drop):', warstwy);
+    console.log('🟠 New warstwy (end drop):', newWarstwy);
+    console.log('🔵 Are they different (end drop)?', JSON.stringify(warstwy) !== JSON.stringify(newWarstwy));
+    
+    if (JSON.stringify(warstwy) !== JSON.stringify(newWarstwy)) {
+      setWarstwy(newWarstwy);
+      console.log('✅ End drop: State updated successfully');
+    } else {
+      console.log('❌ End drop: No change in state');
+    }
+
+    setDraggedItem(null);
+    setDropTarget(null);
+    setDropPosition('before');
   };
 
   const renderWarstwaItem = (warstwa: Warstwa, level: number = 0): React.ReactNode => {
@@ -287,23 +464,62 @@ export default function HomePage() {
     
     return (
       <Box key={warstwa.id} sx={{ mb: 0, position: 'relative' }}>
-        {/* Drop indicator - linia pokazująca gdzie zostanie upuszczona warstwa */}
+        {/* Drop indicator - precyzyjna linia pokazująca gdzie zostanie upuszczona warstwa */}
         {isDropTarget && draggedItem && (
           <Box
             sx={{
               position: 'absolute',
-              top: -2,
-              left: level * 1.5 * 8 + 8,
+              top: dropPosition === 'before' ? -2 : 'auto',
+              bottom: dropPosition === 'after' ? -2 : 'auto',
+              left: level * 1.5 * 8,
               right: 8,
-              height: 4,
-              bgcolor: '#4fc3f7',
-              borderRadius: 2,
-              zIndex: 10,
-              animation: 'pulse 1s infinite',
-              '@keyframes pulse': {
-                '0%': { opacity: 0.6 },
-                '50%': { opacity: 1 },
-                '100%': { opacity: 0.6 }
+              height: 3,
+              bgcolor: '#1976d2',
+              borderRadius: 1.5,
+              zIndex: 1000,
+              pointerEvents: 'none',
+              boxShadow: '0 0 8px rgba(25, 118, 210, 0.8)',
+              animation: 'preciseDropIndicator 1.2s infinite',
+              '@keyframes preciseDropIndicator': {
+                '0%': { 
+                  opacity: 0.7, 
+                  transform: 'scaleX(0.8)',
+                  boxShadow: '0 0 4px rgba(25, 118, 210, 0.4)'
+                },
+                '50%': { 
+                  opacity: 1, 
+                  transform: 'scaleX(1)',
+                  boxShadow: '0 0 12px rgba(25, 118, 210, 1)'
+                },
+                '100%': { 
+                  opacity: 0.7, 
+                  transform: 'scaleX(0.8)',
+                  boxShadow: '0 0 4px rgba(25, 118, 210, 0.4)'
+                }
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                left: -4,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: 8,
+                height: 8,
+                bgcolor: '#1976d2',
+                borderRadius: '50%',
+                boxShadow: '0 0 6px rgba(25, 118, 210, 0.8)'
+              },
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                right: -4,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: 8,
+                height: 8,
+                bgcolor: '#1976d2',
+                borderRadius: '50%',
+                boxShadow: '0 0 6px rgba(25, 118, 210, 0.8)'
               }
             }}
           />
@@ -316,7 +532,7 @@ export default function HomePage() {
           onDragEnd={handleDragEnd}
           onDragEnter={(e) => handleDragEnter(e, warstwa.id)}
           onDragLeave={handleDragLeave}
-          onDragOver={handleDragOver}
+          onDragOver={(e) => handleDragOver(e, warstwa.id)}
           onDrop={(e) => handleDrop(e, warstwa.id)}
           sx={{
             display: 'flex',
@@ -443,7 +659,7 @@ export default function HomePage() {
           
           {/* Ikona kalendarza - tylko dla warstw (nie katalogów) */}
           {warstwa.typ !== 'grupa' && (
-            <Tooltip title="Kalendarz" arrow>
+            <Tooltip title="Pokaż tabele atrybutów" arrow>
               <IconButton
                 size="small"
                 onClick={(e) => {
@@ -466,6 +682,40 @@ export default function HomePage() {
       {warstwa.dzieci && warstwa.rozwinięta && (
         <Box sx={{ ml: 1 }}>
           {warstwa.dzieci.map(dziecko => renderWarstwaItem(dziecko, level + 1))}
+          
+          {/* Specjalna strefa drop na końcu grupy */}
+          <Box
+            onDragEnter={(e) => handleDragEnter(e, `${warstwa.id}-end`)}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDropAtEnd(e, warstwa.id)}
+            sx={{
+              height: 20,
+              position: 'relative',
+              cursor: draggedItem ? 'copy' : 'default',
+              '&:hover': draggedItem ? {
+                bgcolor: 'rgba(79, 195, 247, 0.05)'
+              } : {}
+            }}
+          >
+            {/* Wskaźnik drop na końcu */}
+            {dropTarget === `${warstwa.id}-end` && draggedItem && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 2,
+                  left: 0,
+                  right: 0,
+                  height: 3,
+                  bgcolor: '#4fc3f7',
+                  borderRadius: 1.5,
+                  boxShadow: '0 0 6px rgba(79, 195, 247, 0.6)',
+                  animation: 'dropPulse 1.5s infinite',
+                  pointerEvents: 'none'
+                }}
+              />
+            )}
+          </Box>
         </Box>
       )}
     </Box>
@@ -637,7 +887,7 @@ export default function HomePage() {
                 flexWrap: 'wrap',
                 px: 1
               }}>
-                <Tooltip title="Planeta Ziemia" arrow>
+                <Tooltip title="Dodaj zbiór danych - INSPIRE" arrow>
                   <IconButton
                     size="small"
                     onClick={() => console.log('Planeta Ziemia')}
@@ -652,7 +902,7 @@ export default function HomePage() {
                   </IconButton>
                 </Tooltip>
                 
-                <Tooltip title="Mapa Polski" arrow>
+                <Tooltip title="Dodaj zbór danych - PRAWO KRAJOWE" arrow>
                   <IconButton
                     size="small"
                     onClick={() => console.log('Mapa Polski')}
@@ -667,7 +917,7 @@ export default function HomePage() {
                   </IconButton>
                 </Tooltip>
                 
-                <Tooltip title="Dodaj element" arrow>
+                <Tooltip title="Dodaj warstwe" arrow>
                   <IconButton
                     size="small"
                     onClick={() => console.log('Dodaj')}
@@ -682,7 +932,7 @@ export default function HomePage() {
                   </IconButton>
                 </Tooltip>
                 
-                <Tooltip title="Strzałka w górę" arrow>
+                <Tooltip title="Importuj warstwe" arrow>
                   <IconButton
                     size="small"
                     onClick={() => console.log('Góra')}
@@ -697,7 +947,7 @@ export default function HomePage() {
                   </IconButton>
                 </Tooltip>
                 
-                <Tooltip title="Plus" arrow>
+                <Tooltip title="Dodaj grupę" arrow>
                   <IconButton
                     size="small"
                     onClick={() => console.log('Plus')}
@@ -711,8 +961,8 @@ export default function HomePage() {
                     <AddIcon sx={{ fontSize: '18px' }} />
                   </IconButton>
                 </Tooltip>
-                
-                <Tooltip title="Zamknij" arrow>
+
+                <Tooltip title="Usuń grupę lub warstwę" arrow>
                   <IconButton
                     size="small"
                     onClick={() => console.log('Zamknij')}
@@ -727,7 +977,7 @@ export default function HomePage() {
                   </IconButton>
                 </Tooltip>
                 
-                <Tooltip title="Komentarze" arrow>
+                <Tooltip title="Utwórz konsultacje społeczne" arrow>
                   <IconButton
                     size="small"
                     onClick={() => console.log('Komentarze')}
@@ -741,8 +991,8 @@ export default function HomePage() {
                     <ChatIcon sx={{ fontSize: '18px' }} />
                   </IconButton>
                 </Tooltip>
-                
-                <Tooltip title="Gwiazda" arrow>
+
+                <Tooltip title="Menedżer warstw" arrow>
                   <IconButton
                     size="small"
                     onClick={() => console.log('Gwiazda')}
@@ -756,8 +1006,8 @@ export default function HomePage() {
                     <StarIcon sx={{ fontSize: '18px' }} />
                   </IconButton>
                 </Tooltip>
-                
-                <Tooltip title="Edytuj" arrow>
+
+                <Tooltip title="Konfiguracja wyrysu i wypisu" arrow>
                   <IconButton
                     size="small"
                     onClick={() => console.log('Edytuj')}
@@ -778,7 +1028,7 @@ export default function HomePage() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, position: 'relative' }}>
                 {/* Przycisk po lewej stronie */}
                 <Box sx={{ position: 'relative' }}>
-                  <Tooltip title="Filtruj warstwy" arrow>
+                  <Tooltip title="Widoczność warstw" arrow>
                     <IconButton
                       size="small"
                       onClick={() => setFilterMenuOpen(!filterMenuOpen)}
