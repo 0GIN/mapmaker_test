@@ -26,6 +26,8 @@ import { sidebarStyles } from '@/config/theme';
 export default function HomePage() {
   // UI State
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState<number>(sidebarStyles.width);
+  const [isResizing, setIsResizing] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('wszystko');
@@ -301,9 +303,9 @@ export default function HomePage() {
         sx={{
           position: 'fixed',
           top: 20,
-          left: sidebarCollapsed ? 20 : sidebarStyles.width + 20,
+          left: sidebarCollapsed ? 20 : sidebarWidth + 20,
           zIndex: 1300,
-          transition: 'left 0.3s ease',
+          transition: isResizing ? 'none' : 'left 0.3s ease',
         }}
       >
         {sidebarCollapsed ? <MenuIcon /> : <CloseIcon />}
@@ -318,6 +320,9 @@ export default function HomePage() {
         selectedFilter={selectedFilter}
         filterMenuOpen={filterMenuOpen}
         expandedSections={expandedSections}
+        onWidthChange={(width: number) => setSidebarWidth(width)}
+        onResizeStart={() => setIsResizing(true)}
+        onResizeEnd={() => setIsResizing(false)}
         checkboxStates={checkboxStates}
         dragDropState={dragDropHandlers.dragDropState}
         selectedBasemap={selectedBasemap}
@@ -354,7 +359,7 @@ export default function HomePage() {
       <Box
         sx={{
           flex: 1,
-          marginLeft: sidebarCollapsed ? 0 : 320,
+          marginLeft: sidebarCollapsed ? 0 : sidebarWidth,
           transition: 'margin-left 0.3s ease',
           position: 'relative'
         }}

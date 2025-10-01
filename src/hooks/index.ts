@@ -5,6 +5,7 @@
  * - useLocalStorage - zarządzanie danymi w localStorage
  * - useDebounce - opóźnianie wykonania funkcji (dla wyszukiwania)
  * - usePrevious - dostęp do poprzedniej wartości state
+ * - useResizable - zarządzanie zmianą rozmiaru komponentów
  * - Inne utility hooks używane w aplikacji
  * - Centralne miejsce eksportu wszystkich hooków
  */
@@ -85,3 +86,6 @@ export function useMediaQuery(query: string) {
 
   return matches;
 }
+
+// Export useResizable hook
+export { useResizable } from './useResizable';
