@@ -18,6 +18,11 @@ import {
 } from '@mui/material';
 import { useOptimisticLayers } from '@/hooks/useOptimisticLayers';
 import { Warstwa } from '@/hooks/useLayersApi';
+import { 
+  layerIconColors, 
+  dropZoneColors, 
+  sidebarStyles 
+} from '@/config/theme';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { 
@@ -325,10 +330,10 @@ export default function HomePage() {
 
   const getWarstwaIcon = (typ: 'grupa' | 'wektor' | 'raster', id?: string) => {
     switch (typ) {
-      case 'grupa': return <FolderIcon sx={{ color: '#4fc3f7' }} />; // Niebieska ikona folderu dla katalogów
-      case 'wektor': return <LayersIcon sx={{ color: '#81c784' }} />; // Zielona ikona dla warstw wektorowych
-      case 'raster': return <LayersIcon sx={{ color: '#81c784' }} />; // Zielona ikona dla warstw rastrowych
-      default: return <LayersIcon sx={{ color: '#81c784' }} />; // Domyślnie zielona ikona warstwy
+      case 'grupa': return <FolderIcon sx={{ color: layerIconColors.grupa }} />; // Niebieska ikona folderu dla katalogów
+      case 'wektor': return <LayersIcon sx={{ color: layerIconColors.wektor }} />; // Zielona ikona dla warstw wektorowych
+      case 'raster': return <LayersIcon sx={{ color: layerIconColors.raster }} />; // Zielona ikona dla warstw rastrowych
+      default: return <LayersIcon sx={{ color: layerIconColors.default }} />; // Domyślnie zielona ikona warstwy
     }
   };
 
@@ -851,7 +856,7 @@ export default function HomePage() {
               left: level * 1.5 * 8,
               right: 8,
               bottom: 0,
-              border: '2px dashed #4caf50',
+              border: `2px dashed ${dropZoneColors.primary}`,
               borderRadius: 1,
               zIndex: 999,
               pointerEvents: 'none',
@@ -859,17 +864,17 @@ export default function HomePage() {
               animation: 'groupDropIndicator 1.5s infinite',
               '@keyframes groupDropIndicator': {
                 '0%': { 
-                  borderColor: '#4caf50',
+                  borderColor: dropZoneColors.primary,
                   bgcolor: 'rgba(76, 175, 80, 0.1)',
                   boxShadow: '0 0 8px rgba(76, 175, 80, 0.3)'
                 },
                 '50%': { 
-                  borderColor: '#66bb6a',
+                  borderColor: dropZoneColors.secondary,
                   bgcolor: 'rgba(76, 175, 80, 0.2)',
                   boxShadow: '0 0 16px rgba(76, 175, 80, 0.6)'
                 },
                 '100%': { 
-                  borderColor: '#4caf50',
+                  borderColor: dropZoneColors.hover,
                   bgcolor: 'rgba(76, 175, 80, 0.1)',
                   boxShadow: '0 0 8px rgba(76, 175, 80, 0.3)'
                 }
@@ -1183,99 +1188,18 @@ export default function HomePage() {
           zIndex: -1
         }}
       >
-        {/* Dodajmy elementy map-like */}
-        <Box sx={{ 
-          position: 'absolute', 
-          top: '20%', 
-          left: '15%', 
-          width: 8, 
-          height: 8, 
-          bgcolor: '#ff6b35', 
-          borderRadius: '50%',
-          '&::after': {
-            content: '"Łódź"',
-            position: 'absolute',
-            top: -25,
-            left: -15,
-            fontSize: '12px',
-            color: '#333',
-            fontWeight: 500
-          }
-        }} />
-        <Box sx={{ 
-          position: 'absolute', 
-          top: '45%', 
-          left: '25%', 
-          width: 6, 
-          height: 6, 
-          bgcolor: '#4fc3f7', 
-          borderRadius: '50%',
-          '&::after': {
-            content: '"Częstochowa"',
-            position: 'absolute',
-            top: -25,
-            left: -25,
-            fontSize: '11px',
-            color: '#555',
-            fontWeight: 400
-          }
-        }} />
-        <Box sx={{ 
-          position: 'absolute', 
-          top: '60%', 
-          left: '45%', 
-          width: 10, 
-          height: 10, 
-          bgcolor: '#e91e63', 
-          borderRadius: '50%',
-          '&::after': {
-            content: '"Kraków"',
-            position: 'absolute',
-            top: -25,
-            left: -15,
-            fontSize: '12px',
-            color: '#333',
-            fontWeight: 500
-          }
-        }} />
-        {/* Drogi/linie */}
-        <Box sx={{
-          position: 'absolute',
-          top: '25%',
-          left: '20%',
-          width: '200px',
-          height: '2px',
-          bgcolor: '#90a4ae',
-          transform: 'rotate(25deg)',
-          opacity: 0.6
-        }} />
-        <Box sx={{
-          position: 'absolute',
-          top: '55%',
-          left: '30%',
-          width: '150px',
-          height: '2px',
-          bgcolor: '#90a4ae',
-          transform: 'rotate(-15deg)',
-          opacity: 0.6
-        }} />
       </Box>
       
       {/* Toggle button - zawsze widoczny */}
       <IconButton
         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+        className="sidebar-toggle"
         sx={{
           position: 'fixed',
           top: 20,
-          left: sidebarCollapsed ? 20 : 340,
+          left: sidebarCollapsed ? 20 : sidebarStyles.width + 20,
           zIndex: 1300,
-          bgcolor: 'rgba(55, 60, 72, 0.9)',
-          color: 'white',
-          '&:hover': {
-            bgcolor: 'rgba(79, 195, 247, 0.8)',
-          },
           transition: 'left 0.3s ease',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
         }}
       >
         {sidebarCollapsed ? <MenuIcon /> : <CloseIcon />}
@@ -1286,22 +1210,22 @@ export default function HomePage() {
         sx={{
           position: 'fixed',
           top: 0,
-          left: sidebarCollapsed ? -320 : 0,
+          left: sidebarCollapsed ? -sidebarStyles.width : 0,
           height: '100vh',
-          width: 320,
-          bgcolor: 'rgba(60, 60, 60, 0.9)',
-          boxShadow: sidebarCollapsed ? 'none' : '2px 0 12px rgba(0,0,0,0.4)',
+          width: sidebarStyles.width,
+          bgcolor: sidebarStyles.background,
+          boxShadow: sidebarCollapsed ? 'none' : sidebarStyles.boxShadow,
           transition: 'left 0.3s ease',
           zIndex: 1200,
-          borderRight: sidebarCollapsed ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
+          borderRight: sidebarCollapsed ? 'none' : sidebarStyles.borderRight,
           display: 'flex',
           flexDirection: 'column'
         }}
       >
         <Box className="layer-panel__header" sx={{ 
           p: 2, 
-          borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
-          bgcolor: 'rgba(255, 255, 255, 0.05)',
+          borderBottom: sidebarStyles.header.borderBottom,
+          bgcolor: sidebarStyles.header.background,
           textAlign: 'center'
         }}>
           {/* Tytuł */}
@@ -1332,12 +1256,7 @@ export default function HomePage() {
                   <IconButton
                     size="small"
                     onClick={() => console.log('Planeta Ziemia')}
-                    sx={{
-                      color: 'rgba(255, 255, 255, 0.8)',
-                      p: 0.5,
-                      minWidth: 'auto',
-                      '&:hover': { color: '#4fc3f7' }
-                    }}
+                    className="toolbar-icon"
                   >
                     <PublicIcon sx={{ fontSize: '18px' }} />
                   </IconButton>

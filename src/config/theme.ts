@@ -76,5 +76,60 @@ export const theme = createTheme({
         },
       },
     },
+
+    // Stylowanie przycisków ikon
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          '&.sidebar-toggle': {
+            backgroundColor: 'rgba(55, 60, 72, 0.9)',
+            color: 'white',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            '&:hover': {
+              backgroundColor: 'rgba(79, 195, 247, 0.8)',
+            },
+          },
+          '&.toolbar-icon': {
+            color: 'rgba(255, 255, 255, 0.8)',
+            padding: '4px',
+            minWidth: 'auto',
+            '&:hover': { 
+              color: '#4fc3f7' 
+            },
+          },
+        },
+      },
+    },
   },
 });
+
+// ===================================================================
+// DODATKOWE STAŁE STYLOWE - Często używane kolory i style
+// ===================================================================
+
+// Kolory ikon według typu warstwy
+export const layerIconColors = {
+  grupa: '#4fc3f7',    // Niebieski dla folderów/grup
+  wektor: '#81c784',   // Zielony dla warstw wektorowych  
+  raster: '#81c784',   // Zielony dla warstw rastrowych
+  default: '#81c784'   // Domyślny zielony
+} as const;
+
+// Kolory drop zones
+export const dropZoneColors = {
+  primary: '#4caf50',     // Główny zielony
+  secondary: '#66bb6a',   // Jaśniejszy zielony
+  hover: '#4caf50'        // Kolor przy hover
+} as const;
+
+// Style sidebar/panelu
+export const sidebarStyles = {
+  width: 320,
+  background: 'rgba(60, 60, 60, 0.9)',
+  boxShadow: '2px 0 12px rgba(0,0,0,0.4)',
+  borderRight: '1px solid rgba(255, 255, 255, 0.2)',
+  header: {
+    background: 'rgba(255, 255, 255, 0.05)',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+  }
+} as const;
