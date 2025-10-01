@@ -52,7 +52,8 @@ import {
   Star as StarIcon,
   Edit as EditIcon,
   GitHub as GitHubIcon,
-  ViewList as ViewListIcon
+  ViewList as ViewListIcon,
+  Lock as LockIcon
 } from '@mui/icons-material';
 
 // Interface przeniesiony do hooks/useLayersApi.ts
@@ -1221,7 +1222,7 @@ export default function HomePage() {
                 </Tooltip>
               </Box>
 
-            <Box sx={{ mb: 1 }}>
+            <Box sx={{ mb: -1 }}>
               {/* Kontener z przyciskami i polem wyszukiwania */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, position: 'relative' }}>
                 {/* Przycisk po lewej stronie */}
@@ -1537,33 +1538,12 @@ export default function HomePage() {
                           enterDelay={0}
                           leaveDelay={0}
                         >
-                          <Box sx={{ 
-                            ml: 1, 
-                            width: 14, 
-                            height: 14, 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
+                          <LockIcon sx={{ 
+                            ml: 1,
+                            fontSize: '12px',
+                            color: 'rgba(255, 255, 255, 0.6)',
                             cursor: 'help'
-                          }}>
-                            <Box sx={{ 
-                              width: 8, 
-                              height: 6, 
-                              border: '1px solid rgba(255, 255, 255, 0.6)', 
-                              borderRadius: '2px 2px 0 0',
-                              position: 'relative',
-                              '&::after': {
-                                content: '""',
-                                position: 'absolute',
-                                bottom: -3,
-                                left: -1,
-                                width: 10,
-                                height: 4,
-                                bgcolor: 'rgba(255, 255, 255, 0.6)',
-                                borderRadius: '0 0 2px 2px'
-                              }
-                            }} />
-                          </Box>
+                          }} />
                         </Tooltip>
                       </Box>
                       
@@ -1859,35 +1839,12 @@ export default function HomePage() {
                           enterDelay={0}
                           leaveDelay={0}
                         >
-                          <Box 
-                            sx={{ 
-                              ml: 1, 
-                              width: 14, 
-                              height: 14, 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              cursor: 'help'
-                            }}
-                          >
-                            <Box sx={{ 
-                              width: 8, 
-                              height: 6, 
-                              border: '1px solid rgba(255, 255, 255, 0.6)', 
-                              borderRadius: '2px 2px 0 0',
-                              position: 'relative',
-                              '&::after': {
-                                content: '""',
-                                position: 'absolute',
-                                bottom: -3,
-                                left: -1,
-                                width: 10,
-                                height: 4,
-                                bgcolor: 'rgba(255, 255, 255, 0.6)',
-                                borderRadius: '0 0 2px 2px'
-                              }
-                            }} />
-                          </Box>
+                          <LockIcon sx={{ 
+                            ml: 1,
+                            fontSize: '12px',
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            cursor: 'help'
+                          }} />
                         </Tooltip>
                       </Box>
                       
@@ -2248,35 +2205,12 @@ export default function HomePage() {
                           enterDelay={0}
                           leaveDelay={0}
                         >
-                          <Box 
-                            sx={{ 
-                              ml: 1, 
-                              width: 14, 
-                              height: 14, 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              cursor: 'help'
-                            }}
-                          >
-                            <Box sx={{ 
-                              width: 8, 
-                              height: 6, 
-                              border: '1px solid rgba(255, 255, 255, 0.6)', 
-                              borderRadius: '2px 2px 0 0',
-                              position: 'relative',
-                              '&::after': {
-                                content: '""',
-                                position: 'absolute',
-                                bottom: -3,
-                                left: -1,
-                                width: 10,
-                                height: 4,
-                                bgcolor: 'rgba(255, 255, 255, 0.6)',
-                                borderRadius: '0 0 2px 2px'
-                              }
-                            }} />
-                          </Box>
+                          <LockIcon sx={{ 
+                            ml: 1,
+                            fontSize: '12px',
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            cursor: 'help'
+                          }} />
                         </Tooltip>
                       </Box>
                       
