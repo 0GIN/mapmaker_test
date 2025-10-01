@@ -384,10 +384,14 @@ export default function HomePage() {
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragEnd = () => {
+  const cleanupDragState = () => {
     setDraggedItem(null);
     setDropTarget(null);
-    setShowMainLevelZone(false); // Ukryj strefę główną po zakończeniu przeciągania
+    setShowMainLevelZone(false);
+  };
+
+  const handleDragEnd = () => {
+    cleanupDragState();
   };
 
   const handleDragEnter = (e: React.DragEvent, id: string) => {
@@ -671,6 +675,7 @@ export default function HomePage() {
     if (!draggedItem || draggedItem === targetId) {
       console.log('❌ Invalid drop');
       setDropTarget(null);
+      setShowMainLevelZone(false);
       return;
     }
 
@@ -702,6 +707,7 @@ export default function HomePage() {
       setWarstwy(newWarstwy);
       setDraggedItem(null);
       setDropTarget(null);
+      setShowMainLevelZone(false); // Resetuj strefę główną
       return;
     }
 
@@ -709,6 +715,7 @@ export default function HomePage() {
     if (isDescendant(draggedItem, targetId)) {
       console.log('❌ Cannot drop parent into its own child');
       setDropTarget(null);
+      setShowMainLevelZone(false);
       return;
     }
 
@@ -761,6 +768,7 @@ export default function HomePage() {
     setDraggedItem(null);
     setDropTarget(null);
     setDropPosition('before');
+    setShowMainLevelZone(false); // Resetuj strefę główną
   };
 
   const handleDropAtEnd = (e: React.DragEvent, groupId: string) => {
@@ -820,6 +828,7 @@ export default function HomePage() {
     setDraggedItem(null);
     setDropTarget(null);
     setDropPosition('before');
+    setShowMainLevelZone(false); // Resetuj strefę główną
   };
 
   const renderWarstwaItem = (warstwa: any, level: number = 0): React.ReactNode => {
@@ -983,8 +992,8 @@ export default function HomePage() {
             }
           }}
         >
-        {/* Drag handle */}
-        {warstwa.typ === 'grupa' && (
+        {/* Strzałka rozwijania dla grup lub placeholder dla warstw */}
+        {warstwa.typ === 'grupa' ? (
           <Box
             onClick={(e) => {
               e.stopPropagation();
@@ -1014,6 +1023,9 @@ export default function HomePage() {
               }}
             />
           </Box>
+        ) : (
+          /* Placeholder przestrzeń dla warstw - wyrównanie checkboxów */
+          <Box sx={{ width: 16, height: 16, mr: 0.5 }} />
         )}
         
         <Box
@@ -1116,9 +1128,10 @@ export default function HomePage() {
             onDragOver={handleDragOver}
             onDrop={(e) => handleDropAtEnd(e, warstwa.id)}
             sx={{
-              height: 20,
+              height: draggedItem ? 12 : 4, // Mniejsza wysokość, większa tylko podczas przeciągania
               position: 'relative',
               cursor: draggedItem ? 'copy' : 'default',
+              transition: 'height 0.2s ease',
               '&:hover': draggedItem ? {
                 bgcolor: 'rgba(79, 195, 247, 0.05)'
               } : {}
