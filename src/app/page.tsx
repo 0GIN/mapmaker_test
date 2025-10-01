@@ -788,6 +788,7 @@ export default function HomePage() {
           type="checkbox"
           checked={warstwa.widoczna}
           onChange={() => toggleVisibility(warstwa.id)}
+          onClick={(e) => e.stopPropagation()}
           sx={{
             mr: 1,
             cursor: 'pointer',
