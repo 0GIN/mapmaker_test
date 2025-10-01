@@ -646,7 +646,7 @@ export default function HomePage() {
     const isDropTarget = dropTarget === warstwa.id;
     
     return (
-      <Box key={warstwa.id} sx={{ mb: 0, position: 'relative' }}>
+      <Box key={warstwa.id} sx={{ mb: -0.2, position: 'relative' }}>
         {/* Drop indicator - precyzyjna linia pokazująca gdzie zostanie upuszczona warstwa */}
         {isDropTarget && draggedItem && (
           <Box
@@ -721,7 +721,7 @@ export default function HomePage() {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            py: 0.5,
+            py: 0.2,
             px: 1,
             ml: level * 1.5,
             borderRadius: 4,
@@ -756,7 +756,10 @@ export default function HomePage() {
         {/* Drag handle */}
         {warstwa.typ === 'grupa' && (
           <Box
-            onClick={() => toggleExpansion(warstwa.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleExpansion(warstwa.id);
+            }}
             sx={{
               width: 16,
               height: 16,
@@ -919,7 +922,7 @@ export default function HomePage() {
 
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
-      {/* Tło z mapą jak Google Maps */}
+      {/* Tło z Google Maps */}
       <Box
         sx={{
           position: 'fixed',
@@ -929,11 +932,11 @@ export default function HomePage() {
           bottom: 0,
           backgroundImage: `
             linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.05)),
-            url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e8f5e8' fill-opacity='0.3'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
-            linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 25%, #e0f0e0 50%, #d5e7d5 75%, #c8e0c8 100%)
+            url("https://media.wired.com/photos/59269cd37034dc5f91bec0f1/191:100/w_1280,c_limit/GoogleMapTA.jpg?mbid=social_retweet")
           `,
-          backgroundSize: '60px 60px, 60px 60px, cover',
-          backgroundPosition: '0 0, 30px 30px, center',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
           zIndex: -1
         }}
       >
@@ -1063,7 +1066,7 @@ export default function HomePage() {
             variant="h6" 
             sx={{ 
               color: 'white', 
-              mb: 2, 
+              mb: 1, 
               fontSize: '16px',
               fontWeight: 400,
               letterSpacing: '2px',
@@ -1077,7 +1080,7 @@ export default function HomePage() {
               <Box sx={{ 
                 display: 'flex', 
                 gap: 0.5, 
-                mb: 2,
+                mb: 0.1,
                 justifyContent: 'space-between',
                 flexWrap: 'wrap',
                 px: 1
@@ -1218,7 +1221,7 @@ export default function HomePage() {
                 </Tooltip>
               </Box>
 
-            <Box sx={{ mb: 2 }}>
+            <Box sx={{ mb: 1 }}>
               {/* Kontener z przyciskami i polem wyszukiwania */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, position: 'relative' }}>
                 {/* Przycisk po lewej stronie */}
@@ -1257,7 +1260,7 @@ export default function HomePage() {
                         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
                         zIndex: 1000,
                         minWidth: 140,
-                        py: 1
+                        py: 0.5,
                       }}
                     >
                       {[
@@ -1274,7 +1277,7 @@ export default function HomePage() {
                           }}
                           sx={{
                             px: 2,
-                            py: 1.2,
+                            py: 0.3,
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
@@ -1404,7 +1407,7 @@ export default function HomePage() {
             borderTop: '1px solid rgba(255, 255, 255, 0.2)',
             display: 'flex',
             flexDirection: 'column',
-            height: '250px',
+            height: '200px',
             overflow: 'hidden'
           }}
         >
@@ -1422,7 +1425,7 @@ export default function HomePage() {
             <Typography
               sx={{
                 color: 'white',
-                fontSize: '12px',
+                fontSize: '15px',
                 fontWeight: 500,
                 flex: 1
               }}
@@ -1455,14 +1458,14 @@ export default function HomePage() {
                 {selectedLayer.typ === 'grupa' ? (
                   <>
                     {/* Sekcja: Informacje ogólne - jak na screenie */}
-                    <Box sx={{ mb: 1.5 }}>
+                    <Box sx={{ mb: 0.8 }}>
                       <Box
                         onClick={() => toggleSection('grupa-informacje-ogolne')}
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
                           cursor: 'pointer',
-                          mb: 1,
+                          mb: 0.5,
                           '&:hover': { color: '#4fc3f7' }
                         }}
                       >
@@ -1477,7 +1480,7 @@ export default function HomePage() {
                       
                       {expandedSections['grupa-informacje-ogolne'] && (
                         <Box sx={{ ml: 2, mt: 1 }}>
-                          <Box sx={{ mb: 1.5 }}>
+                          <Box sx={{ mb: 0.8 }}>
                             <Typography sx={{ fontSize: '11px', color: 'white', mb: 0.5 }}>
                               Nazwa
                             </Typography>
@@ -1508,7 +1511,7 @@ export default function HomePage() {
                     </Box>
 
                     {/* Sekcja: Pobieranie - jak na screenie z ikoną kłódki */}
-                    <Box sx={{ mb: 1.5 }}>
+                    <Box sx={{ mb: 0.8 }}>
                       <Box
                         onClick={() => toggleSection('grupa-pobieranie')}
                         sx={{
@@ -1572,7 +1575,7 @@ export default function HomePage() {
                               border: '1px solid rgba(100, 110, 120, 0.6)',
                               borderRadius: '4px',
                               px: 2,
-                              py: 0.7,
+                              py: 0.4,
                               cursor: 'pointer',
                               fontSize: '11px',
                               color: 'white',
@@ -1593,7 +1596,7 @@ export default function HomePage() {
                     </Box>
 
                     {/* Sekcja: Widoczność - jak na screenie */}
-                    <Box sx={{ mb: 1.5 }}>
+                    <Box sx={{ mb: 0.8 }}>
                       <Box
                         onClick={() => toggleSection('grupa-widocznosc')}
                         sx={{
@@ -1616,7 +1619,7 @@ export default function HomePage() {
                       {expandedSections['grupa-widocznosc'] && (
                         <Box sx={{ ml: 2, mt: 1 }}>
                           {/* Domyślne wyświetlanie grupy z checkboxem */}
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.8 }}>
                             <Typography sx={{ fontSize: '11px', color: 'white' }}>
                               Domyślne wyświetlanie grupy
                             </Typography>
@@ -1658,7 +1661,7 @@ export default function HomePage() {
                               border: '1px solid rgba(100, 110, 120, 0.6)',
                               borderRadius: '4px',
                               px: 2,
-                              py: 0.7,
+                              py: 0.4,
                               cursor: 'pointer',
                               fontSize: '11px',
                               color: 'white',
@@ -1679,7 +1682,7 @@ export default function HomePage() {
                     </Box>
 
                     {/* Sekcja: Informacje szczegółowe - jak na screenie */}
-                    <Box sx={{ mb: 1.5 }}>
+                    <Box sx={{ mb: 0.8 }}>
                       <Box
                         onClick={() => toggleSection('grupa-informacje-szczegolowe')}
                         sx={{
@@ -1712,7 +1715,7 @@ export default function HomePage() {
                                 border: '1px solid rgba(100, 110, 120, 0.6)',
                                 borderRadius: '4px',
                                 px: 2,
-                                py: 0.7,
+                                py: 0.4,
                                 cursor: 'pointer',
                                 fontSize: '11px',
                                 color: 'white',
@@ -1737,7 +1740,7 @@ export default function HomePage() {
                     {/* WŁAŚCIWOŚCI WARSTWY - gdy selectedLayer.typ !== 'grupa' (wektor/raster) */}
                     
                     {/* Sekcja: Informacje ogólne */}
-                    <Box sx={{ mb: 1.5 }}>
+                    <Box sx={{ mb: 0.8 }}>
                       <Box
                         onClick={() => toggleSection('warstwa-informacje-ogolne')}
                         sx={{
@@ -1759,7 +1762,7 @@ export default function HomePage() {
                       
                       {expandedSections['warstwa-informacje-ogolne'] && (
                         <Box sx={{ ml: 2, mt: 1 }}>
-                          <Box sx={{ mb: 1.5 }}>
+                          <Box sx={{ mb: 0.8 }}>
                             <Typography sx={{ fontSize: '11px', color: 'white', mb: 0.5 }}>
                               Nazwa
                             </Typography>
@@ -1773,7 +1776,7 @@ export default function HomePage() {
                             </Typography>
                           </Box>
                           
-                          <Box sx={{ mb: 1.5 }}>
+                          <Box sx={{ mb: 0.8 }}>
                             <Typography sx={{ fontSize: '11px', color: 'white', mb: 0.5 }}>
                               Grupa
                             </Typography>
@@ -1786,7 +1789,7 @@ export default function HomePage() {
                             </Typography>
                           </Box>
                           
-                          <Box sx={{ mb: 1.5 }}>
+                          <Box sx={{ mb: 0.8 }}>
                             <Typography sx={{ fontSize: '11px', color: 'white', mb: 0.5 }}>
                               Typ geometrii
                             </Typography>
@@ -1809,7 +1812,7 @@ export default function HomePage() {
                                 border: '1px solid rgba(100, 110, 120, 0.6)',
                                 borderRadius: '4px',
                                 px: 2,
-                                py: 0.7,
+                                py: 0.4,
                                 cursor: 'pointer',
                                 fontSize: '11px',
                                 color: 'white',
@@ -1830,7 +1833,7 @@ export default function HomePage() {
                     </Box>
 
                     {/* Sekcja: Pobieranie */}
-                    <Box sx={{ mb: 1.5 }}>
+                    <Box sx={{ mb: 0.8 }}>
                       <Box
                         onClick={() => toggleSection('warstwa-pobieranie')}
                         sx={{
@@ -1896,7 +1899,7 @@ export default function HomePage() {
                               border: '1px solid rgba(100, 110, 120, 0.6)',
                               borderRadius: '4px',
                               px: 2,
-                              py: 0.7,
+                              py: 0.4,
                               cursor: 'pointer',
                               fontSize: '11px',
                               color: 'white',
@@ -1917,7 +1920,7 @@ export default function HomePage() {
                     </Box>
 
                     {/* Sekcja: Widoczność */}
-                    <Box sx={{ mb: 1.5 }}>
+                    <Box sx={{ mb: 0.8 }}>
                       <Box
                         onClick={() => toggleSection('warstwa-widocznosc')}
                         sx={{
@@ -1940,7 +1943,7 @@ export default function HomePage() {
                       {expandedSections['warstwa-widocznosc'] && (
                         <Box sx={{ ml: 2, mt: 1 }}>
                           {/* Widoczność kolumn z przyciskiem Edytuj */}
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.8 }}>
                             <Typography sx={{ fontSize: '11px', color: 'white' }}>
                               Widoczność kolumn
                             </Typography>
@@ -1950,7 +1953,7 @@ export default function HomePage() {
                                 border: '1px solid rgba(100, 110, 120, 0.6)',
                                 borderRadius: '4px',
                                 px: 1.5,
-                                py: 0.6,
+                                py: 0.3,
                                 cursor: 'pointer',
                                 fontSize: '10px',
                                 color: 'white',
@@ -1968,7 +1971,7 @@ export default function HomePage() {
                           </Box>
 
                           {/* Domyślne wyświetlanie warstwy z checkboxem */}
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.8 }}>
                             <Typography sx={{ fontSize: '11px', color: 'white' }}>
                               Domyślne wyświetlanie warstwy
                             </Typography>
@@ -2004,7 +2007,7 @@ export default function HomePage() {
                           </Box>
 
                           {/* Widoczność od zadanej skali z pustym checkboxem */}
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.8 }}>
                             <Typography sx={{ fontSize: '11px', color: 'white' }}>
                               Widoczność od zadanej skali
                             </Typography>
@@ -2040,7 +2043,7 @@ export default function HomePage() {
                           </Box>
 
                           {/* Widoczność w trybie opublikowanym z checkboxem */}
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.8 }}>
                             <Typography sx={{ fontSize: '11px', color: 'white' }}>
                               Widoczność w trybie opublikowanym
                             </Typography>
@@ -2082,14 +2085,14 @@ export default function HomePage() {
                               border: '1px solid rgba(100, 110, 120, 0.6)',
                               borderRadius: '4px',
                               px: 2,
-                              py: 0.7,
+                              py: 0.4,
                               cursor: 'pointer',
                               fontSize: '11px',
                               color: 'white',
                               fontWeight: 500,
                               textAlign: 'center',
                               width: 'fit-content',
-                              mb: 2,
+                              mb: 1,
                               '&:hover': {
                                 bgcolor: 'rgba(79, 195, 247, 0.2)',
                                 borderColor: 'rgba(79, 195, 247, 0.4)'
@@ -2165,7 +2168,7 @@ export default function HomePage() {
                     </Box>
 
                     {/* Sekcja: Informacje szczegółowe */}
-                    <Box sx={{ mb: 1.5 }}>
+                    <Box sx={{ mb: 0.8 }}>
                       <Box
                         onClick={() => toggleSection('warstwa-informacje-szczegolowe')}
                         sx={{
@@ -2198,7 +2201,7 @@ export default function HomePage() {
                                 border: '1px solid rgba(100, 110, 120, 0.6)',
                                 borderRadius: '4px',
                                 px: 2,
-                                py: 0.7,
+                                py: 0.4,
                                 cursor: 'pointer',
                                 fontSize: '11px',
                                 color: 'white',
@@ -2219,7 +2222,7 @@ export default function HomePage() {
                     </Box>
 
                     {/* Sekcja: Styl warstwy - TYLKO DLA WARSTW, NIE DLA GRUP */}
-                    <Box sx={{ mb: 1.5 }}>
+                    <Box sx={{ mb: 0.8 }}>
                       <Box
                         onClick={() => toggleSection('warstwa-styl-warstwy')}
                         sx={{
@@ -2280,14 +2283,14 @@ export default function HomePage() {
                       {expandedSections['warstwa-styl-warstwy'] && (
                         <Box sx={{ ml: 2, mt: 1 }}>
                           {/* 3 przyciski jak na screenie */}
-                          <Box sx={{ display: 'flex', gap: 0.5, mb: 1.5, flexWrap: 'wrap' }}>
+                          <Box sx={{ display: 'flex', gap: 0.5, mb: 0.8, flexWrap: 'wrap' }}>
                             <Box
                               sx={{
                                 bgcolor: 'rgba(70, 80, 90, 0.8)',
                                 border: '1px solid rgba(100, 110, 120, 0.6)',
                                 borderRadius: '4px',
                                 px: 1.5,
-                                py: 0.6,
+                                py: 0.3,
                                 cursor: 'pointer',
                                 fontSize: '10px',
                                 color: 'white',
@@ -2310,7 +2313,7 @@ export default function HomePage() {
                                 border: '1px solid rgba(100, 110, 120, 0.6)',
                                 borderRadius: '4px',
                                 px: 1.5,
-                                py: 0.6,
+                                py: 0.3,
                                 cursor: 'pointer',
                                 fontSize: '10px',
                                 color: 'white',
@@ -2333,7 +2336,7 @@ export default function HomePage() {
                                 border: '1px solid rgba(100, 110, 120, 0.6)',
                                 borderRadius: '4px',
                                 px: 1.5,
-                                py: 0.6,
+                                py: 0.3,
                                 cursor: 'pointer',
                                 fontSize: '10px',
                                 color: 'white',
@@ -2359,7 +2362,7 @@ export default function HomePage() {
             ) : (
               <>
                 {/* Widok domyślny - Właściwości projektu */}
-                <Box sx={{ mb: 1.5 }}>
+                <Box sx={{ mb: 0.8 }}>
                   <Box
                     onClick={() => toggleSection('uslugi')}
                     sx={{
@@ -2388,7 +2391,7 @@ export default function HomePage() {
                   )}
                 </Box>
 
-                <Box sx={{ mb: 1.5 }}>
+                <Box sx={{ mb: 0.8 }}>
                   <Box
                     onClick={() => toggleSection('pobieranie')}
                     sx={{
@@ -2471,7 +2474,7 @@ export default function HomePage() {
                   )}
                 </Box>
 
-                <Box sx={{ mb: 1.5 }}>
+                <Box sx={{ mb: 0.8 }}>
                   <Box
                     onClick={() => toggleSection('metadane')}
                     sx={{
