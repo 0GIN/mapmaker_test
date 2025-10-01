@@ -1,8 +1,14 @@
-// ===================================================================
-// KOMPONENT STANU ŁADOWANIA
-// ===================================================================
-// Uniwersalny komponent wyświetlający spinner i opcjonalną wiadomość
-// Używany podczas ładowania danych z API lub wykonywania operacji
+/**
+ * KOMPONENT LOADING STATE - STAN ŁADOWANIA
+ * 
+ * Odpowiada za:
+ * - Wyświetlanie spinnera podczas ładowania danych
+ * - Opcjonalne komunikaty o postępie operacji
+ * - Różne rozmiary i style spinnerów
+ * - Skeleton loading dla listy warstw
+ * - Responsywny design dla różnych ekranów
+ * - Animacje ładowania z smooth transitions
+ */
 
 import { Box, CircularProgress, Typography } from '@mui/material';
 

@@ -1,3 +1,14 @@
+/**
+ * KOMPONENT HEADER - NAGŁÓWEK APLIKACJI
+ * 
+ * Odpowiada za:
+ * - Górny pasek nawigacyjny aplikacji
+ * - Logo i tytuł aplikacji MapMaker
+ * - Menu nawigacyjne (jeśli aplikacja ma więcej stron)
+ * - Przycisk logowania/profilu użytkownika
+ * - Responsywny header dla mobile i desktop
+ * - Breadcrumbs i akcje kontekstowe
+ */
 'use client';
 
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';

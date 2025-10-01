@@ -1,8 +1,14 @@
-// ===================================================================
-// PROVIDER MATERIAL-UI - Dostawca tematu i stylów globalnych
-// ===================================================================
-// Ten komponent opakowuje całą aplikację w kontekst Material-UI
-// Zapewnia dostęp do tematu, resetuje style przeglądarki i konfiguruje MUI
+/**
+ * PROVIDER MATERIAL-UI - DOSTAWCA TEMATU I STYLÓW GLOBALNYCH
+ * 
+ * Odpowiada za:
+ * - Opakowywanie aplikacji w kontekst Material-UI (ThemeProvider)
+ * - Dostęp do customowego tematu dla wszystkich komponentów
+ * - Reset stylów przeglądarki (CssBaseline)
+ * - Konfigurację globalnych stylów CSS
+ * - Kontekst dla wszystkich komponentów Material-UI
+ * - Spójność wizualną w całej aplikacji
+ */
 
 'use client'; // Komponent kliencki (potrzebny dla Material-UI)
 

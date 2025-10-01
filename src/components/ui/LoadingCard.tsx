@@ -1,3 +1,13 @@
+/**
+ * KOMPONENT LOADING CARD - KARTA Z ŁADOWANIEM
+ * 
+ * Odpowiada za:
+ * - Wyświetlanie karty z spinnerem w stylu Material-UI
+ * - Loading state dla poszczególnych sekcji aplikacji
+ * - Customizowalne komunikaty ładowania
+ * - Spójny design z resztą aplikacji
+ * - Responsywna karta ładowania
+ */
 'use client';
 
 import { Card, CardContent, Typography, Box, CircularProgress } from '@mui/material';

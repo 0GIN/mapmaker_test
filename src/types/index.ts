@@ -1,4 +1,14 @@
-// Common types used throughout the application
+/**
+ * TYPES INDEX - PODSTAWOWE TYPY APLIKACJI
+ * 
+ * Odpowiada za:
+ * - Interfejs User (użytkownik, role, profil)
+ * - Typy API Response (success, error, pagination)
+ * - Uniwersalne typy używane w całej aplikacji
+ * - Enumeracje dla statusów i stanów
+ * - Utility types (Pick, Omit, Partial dla konkretnych przypadków)
+ * - Centralne miejsce dla typów nie związanych z warstwami
+ */
 
 export interface User {
   id: string;

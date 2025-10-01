@@ -1,8 +1,14 @@
-// ===================================================================
-// KOMPONENT STANU BŁĘDU
-// ===================================================================
-// Uniwersalny komponent do wyświetlania błędów z opcją ponownej próby
-// Używany gdy operacje API się nie powiodą lub wystąpią inne błędy
+/**
+ * KOMPONENT ERROR STATE - STAN BŁĘDU
+ * 
+ * Odpowiada za:
+ * - Wyświetlanie komunikatów o błędach w przyjazny sposób
+ * - Przycisk "Spróbuj ponownie" do retry operacji
+ * - Różne typy błędów (network, API, validation)
+ * - Responsywny design komunikatów błędów
+ * - Ikony i kolory sygnalizujące typ błędu
+ * - Fallback UI gdy coś pójdzie nie tak
+ */
 
 import { Box, Typography, IconButton } from '@mui/material';
 import { Error as ErrorIcon, Refresh as RefreshIcon } from '@mui/icons-material';

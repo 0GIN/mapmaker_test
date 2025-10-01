@@ -1,8 +1,15 @@
-// ===================================================================
-// KLIENT API - Uniwersalna biblioteka do komunikacji z backendem
-// ===================================================================
-// Ten plik zawiera klasę ApiClient do wykonywania żądań HTTP
-// Obsługuje: GET, POST, PUT, DELETE z automatycznym parsowaniem JSON
+/**
+ * KLIENT API - UNIWERSALNA BIBLIOTEKA KOMUNIKACJI Z BACKENDEM
+ * 
+ * Odpowiada za:
+ * - Klasę ApiClient do wykonywania żądań HTTP
+ * - Obsługę metod REST (GET, POST, PUT, DELETE)
+ * - Automatyczne parsowanie JSON response
+ * - Zarządzanie nagłówkami HTTP (Content-Type, Authorization)
+ * - Obsługę błędów HTTP i network errors
+ * - Konfigurację base URL i timeoutów
+ * - Interceptory dla request/response
+ */
 
 // ===================================================================
 // KONFIGURACJA API - URL bazowy i ustawienia

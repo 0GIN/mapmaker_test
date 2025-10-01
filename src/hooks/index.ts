@@ -1,3 +1,13 @@
+/**
+ * HOOKS INDEX - ZBIÓR UNIWERSALNYCH HOOKÓW
+ * 
+ * Odpowiada za:
+ * - useLocalStorage - zarządzanie danymi w localStorage
+ * - useDebounce - opóźnianie wykonania funkcji (dla wyszukiwania)
+ * - usePrevious - dostęp do poprzedniej wartości state
+ * - Inne utility hooks używane w aplikacji
+ * - Centralne miejsce eksportu wszystkich hooków
+ */
 import { useState, useEffect } from 'react';
 
 /**

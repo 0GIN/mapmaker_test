@@ -1,8 +1,15 @@
-// ===================================================================
-// HOOK DO ZARZĄDZANIA API WARSTW MAP
-// ===================================================================
-// Ten hook zawiera całą logikę komunikacji z backendem dotyczącą warstw
-// Obsługuje: pobieranie, aktualizację widoczności, zmianę kolejności, rozwijanie
+/**
+ * HOOK LAYERS API - KOMUNIKACJA Z BACKENDEM WARSTW
+ * 
+ * Odpowiada za:
+ * - Pobieranie listy warstw z serwera
+ * - Aktualizację widoczności warstw (toggle visibility)
+ * - Zmianę kolejności warstw (reordering)
+ * - Rozwijanie/zwijanie grup warstw
+ * - Obsługę błędów komunikacji z API
+ * - Cache'owanie danych warstw
+ * - Synchronizację stanu lokalnego z serwerem
+ */
 
 import { useState, useCallback } from 'react';
 import { apiClient } from '@/lib/api';

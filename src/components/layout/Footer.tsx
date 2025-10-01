@@ -1,3 +1,14 @@
+/**
+ * KOMPONENT FOOTER - STOPKA APLIKACJI
+ * 
+ * Odpowiada za:
+ * - Dolny pasek aplikacji z informacjami o autorze
+ * - Linki do social mediów (GitHub, LinkedIn, Email)
+ * - Copyright i informacje prawne
+ * - Linki do dokumentacji i pomocy
+ * - Responsywny design stopki
+ * - Dodatkowe linki nawigacyjne
+ */
 'use client';
 
 import { Box, Container, Typography, Link, Stack } from '@mui/material';

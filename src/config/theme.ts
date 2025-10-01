@@ -1,8 +1,15 @@
-// ===================================================================
-// KONFIGURACJA TEMATU MATERIAL-UI
-// ===================================================================
-// Ten plik definiuje customowy temat dla całej aplikacji
-// Zawiera: kolory, typografię, style komponentów i inne ustawienia wizualne
+/**
+ * KONFIGURACJA TEMATU MATERIAL-UI
+ * 
+ * Odpowiada za:
+ * - Definiowanie customowego tematu dla całej aplikacji
+ * - Konfigurację kolorów (paleta, primary, secondary, error)
+ * - Ustawienia typografii (fonty, rozmiary, wagi)
+ * - Style komponentów Material-UI (customizacja buttonów, kart, inputów)
+ * - Responsywne breakpointy
+ * - Style specyficzne dla sidebara i innych komponentów UI
+ * - Dark/light mode configuration
+ */
 
 'use client';
 

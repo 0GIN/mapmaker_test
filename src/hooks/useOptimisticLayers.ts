@@ -1,3 +1,14 @@
+/**
+ * HOOK OPTIMISTIC LAYERS - OPTYMISTYCZNE AKTUALIZACJE WARSTW
+ * 
+ * Odpowiada za:
+ * - Implementację optymistycznych aktualizacji (pokazuje zmiany natychmiast)
+ * - Rollback zmian w przypadku błędu API
+ * - Synchronizację lokalnego stanu z serwerem
+ * - Bufferowanie operacji przed wysłaniem do serwera
+ * - Zarządzanie stanem loading/error dla operacji na warstwach
+ * - Retry mechanizm dla nieudanych operacji
+ */
 import { useState, useCallback, useRef } from 'react';
 import { Warstwa, useLayersApi } from './useLayersApi';
 

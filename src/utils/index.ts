@@ -1,4 +1,15 @@
-// Utility functions for common operations
+/**
+ * UTILS INDEX - FUNKCJE POMOCNICZE
+ * 
+ * Odpowiada za:
+ * - formatDate - formatowanie dat do lokalnego formatu
+ * - generateId - generowanie unikalnych identyfikatorów
+ * - debounce - opóźnianie wykonania funkcji
+ * - classNames - łączenie klas CSS
+ * - validateEmail - walidacja adresów email
+ * - Inne utility funkcje używane w aplikacji
+ * - Pure functions bez side effects
+ */
 
 /**
  * Formats a date to a localized string

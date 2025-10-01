@@ -1,8 +1,13 @@
-// ===================================================================
-// GŁÓWNY LAYOUT APLIKACJI (Root Layout)
-// ===================================================================
-// Ten plik definiuje podstawową strukturę HTML dla całej aplikacji Next.js
-// Jest to najwyższy poziom w hierarchii layoutów - wrap dla wszystkich stron
+/**
+ * GŁÓWNY LAYOUT APLIKACJI (Root Layout)
+ * 
+ * Odpowiada za:
+ * - Podstawową strukturę HTML dla całej aplikacji Next.js
+ * - Konfigurację metadanych (title, description)
+ * - Dostarczanie Material-UI provider dla wszystkich komponentów
+ * - Globalne style CSS
+ * - Najwyższy poziom w hierarchii layoutów - wrap dla wszystkich stron
+ */
 
 import type { Metadata } from 'next';
 import MaterialUIProvider from '@/components/providers/MaterialUIProvider';
