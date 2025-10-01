@@ -87,7 +87,19 @@ export default function HomePage() {
     'warstwa-informacje-ogolne': false,
     'warstwa-pobieranie': false,
     'warstwa-widocznosc': false,
-    'warstwa-informacje-szczegolowe': false
+    'warstwa-informacje-szczegolowe': false,
+    'warstwa-styl-warstwy': false
+  });
+
+  // Stany dla checkboxów w różnych sekcjach
+  const [checkboxStates, setCheckboxStates] = useState({
+    // Właściwości grupy - sekcja Widoczność
+    grupaDomyslneWyswietlanie: true,
+    
+    // Właściwości warstwy - sekcja Widoczność
+    warstwaDomyslneWyswietlanie: true,
+    warstwaWidocznoscOdSkali: false,
+    warstwaWidocznoscTrybOpublikowany: true
   });
 
   // Tymczasowo używamy warstw na sztywno
@@ -196,6 +208,116 @@ export default function HomePage() {
     }));
   };
 
+  const toggleCheckbox = (checkboxName: keyof typeof checkboxStates) => {
+    setCheckboxStates(prev => ({
+      ...prev,
+      [checkboxName]: !prev[checkboxName]
+    }));
+    console.log(`Toggle checkbox: ${checkboxName}`, !checkboxStates[checkboxName]);
+  };
+
+  // ===================================================================
+  // FUNKCJE OBSŁUGUJĄCE ENDPOINTY STYLU WARSTWY
+  // ===================================================================
+  
+  /**
+   * Obsługuje edycję stylu warstwy - wywołuje endpoint do edycji
+   */
+  const handleEditLayerStyle = async () => {
+    if (!selectedLayer) {
+      console.warn('Brak wybranej warstwy do edycji');
+      return;
+    }
+
+    try {
+      console.log(`🎨 Edytuj styl warstwy: ${selectedLayer.nazwa}`);
+      
+      // Przykład wywołania endpointu (zakomentowane - do odkomentowania gdy będzie backend)
+      // const response = await apiClient.post(`/layers/${selectedLayer.id}/style/edit`, {
+      //   layerId: selectedLayer.id,
+      //   action: 'edit'
+      // });
+      
+      // Tymczasowo symulacja
+      console.log('📡 Wywołanie endpointu: POST /api/layers/style/edit');
+      console.log('📦 Payload:', {
+        layerId: selectedLayer.id,
+        layerName: selectedLayer.nazwa,
+        action: 'edit'
+      });
+      
+      // Przykład obsługi odpowiedzi
+      // if (response.success) {
+      //   console.log('✅ Styl warstwy został zaktualizowany');
+      // }
+      
+    } catch (error) {
+      console.error('❌ Błąd podczas edycji stylu:', error);
+    }
+  };
+
+  /**
+   * Obsługuje zarządzanie warstwą - wywołuje endpoint do zarządzania
+   */
+  const handleManageLayer = async () => {
+    if (!selectedLayer) {
+      console.warn('Brak wybranej warstwy do zarządzania');
+      return;
+    }
+
+    try {
+      console.log(`⚙️ Zarządzaj warstwą: ${selectedLayer.nazwa}`);
+      
+      // Przykład wywołania endpointu
+      // const response = await apiClient.post(`/layers/${selectedLayer.id}/manage`, {
+      //   layerId: selectedLayer.id,
+      //   action: 'manage'
+      // });
+      
+      console.log('📡 Wywołanie endpointu: POST /api/layers/manage');
+      console.log('📦 Payload:', {
+        layerId: selectedLayer.id,
+        layerName: selectedLayer.nazwa,
+        layerType: selectedLayer.typ,
+        action: 'manage'
+      });
+      
+    } catch (error) {
+      console.error('❌ Błąd podczas zarządzania warstwą:', error);
+    }
+  };
+
+  /**
+   * Obsługuje etykietowanie warstwy - wywołuje endpoint do etykiet
+   */
+  const handleLayerLabeling = async () => {
+    if (!selectedLayer) {
+      console.warn('Brak wybranej warstwy do etykietowania');
+      return;
+    }
+
+    try {
+      console.log(`🏷️ Etykietowanie warstwy: ${selectedLayer.nazwa}`);
+      
+      // Przykład wywołania endpointu
+      // const response = await apiClient.post(`/layers/${selectedLayer.id}/labels`, {
+      //   layerId: selectedLayer.id,
+      //   action: 'labeling'
+      // });
+      
+      console.log('📡 Wywołanie endpointu: POST /api/layers/labels');
+      console.log('📦 Payload:', {
+        layerId: selectedLayer.id,
+        layerName: selectedLayer.nazwa,
+        layerType: selectedLayer.typ,
+        action: 'labeling'
+      });
+      
+    } catch (error) {
+      console.error('❌ Błąd podczas etykietowania:', error);
+    }
+  };
+
   const getWarstwaIcon = (typ: 'grupa' | 'wektor' | 'raster', id?: string) => {
     switch (typ) {
       case 'grupa': return <FolderIcon sx={{ color: '#4fc3f7' }} />; // Niebieska ikona folderu dla katalogów
@@ -223,6 +345,22 @@ export default function HomePage() {
       if (layer.id === id) return layer;
       if (layer.dzieci) {
         const found = findLayerById(layer.dzieci, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const findParentGroup = (layers: Warstwa[], childId: string): Warstwa | null => {
+    for (const layer of layers) {
+      if (layer.dzieci) {
+        // Sprawdź czy dziecko jest bezpośrednio w tej grupie
+        const directChild = layer.dzieci.find(child => child.id === childId);
+        if (directChild) {
+          return layer;
+        }
+        // Sprawdź rekurencyjnie w podgrupach
+        const found = findParentGroup(layer.dzieci, childId);
         if (found) return found;
       }
     }
@@ -1312,175 +1450,910 @@ export default function HomePage() {
           <Box sx={{ flex: 1, p: 1.5, overflow: 'auto' }}>
             {selectedLayer ? (
               <>
-                
-                {/* Właściwości warstwy - prosty styl jak na screenshotach */}
-                
-                {/* Sekcja: Informacje ogólne */}
-                <Box sx={{ mb: 1.5 }}>
-                  <Box
-                    onClick={() => toggleSection('warstwa-informacje-ogolne')}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      mb: 1,
-                      '&:hover': { color: '#4fc3f7' }
-                    }}
-                  >
-                    {expandedSections['warstwa-informacje-ogolne'] ? 
-                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
-                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
-                    }
-                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
-                      Informacje ogólne
-                    </Typography>
-                  </Box>
-                  
-                  {expandedSections['warstwa-informacje-ogolne'] && (
-                    <Box sx={{ ml: 2, mt: 1 }}>
-                      <Box sx={{ mb: 1 }}>
-                        <Typography sx={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.7)' }}>
-                          Nazwa
-                        </Typography>
-                        <Typography sx={{ fontSize: '11px', color: 'white', fontStyle: 'italic', mt: 0.5 }}>
-                          {selectedLayer.nazwa}
+                {/* WŁAŚCIWOŚCI GRUPY - gdy selectedLayer.typ === 'grupa' */}
+                {selectedLayer.typ === 'grupa' ? (
+                  <>
+                    {/* Sekcja: Informacje ogólne - jak na screenie */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box
+                        onClick={() => toggleSection('grupa-informacje-ogolne')}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          mb: 1,
+                          '&:hover': { color: '#4fc3f7' }
+                        }}
+                      >
+                        {expandedSections['grupa-informacje-ogolne'] ? 
+                          <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                          <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                        }
+                        <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                          Informacje ogólne
                         </Typography>
                       </Box>
                       
-                      <Box>
-                        <Typography sx={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.7)' }}>
-                          Grupa
-                        </Typography>
-                        <Typography sx={{ fontSize: '11px', color: 'white', fontStyle: 'italic', mt: 0.5 }}>
-                          {selectedLayer.typ === 'grupa' ? 'Brak grupy nadrzędnej' : 'Brak grupy nadrzędnej'}
-                        </Typography>
-                      </Box>
+                      {expandedSections['grupa-informacje-ogolne'] && (
+                        <Box sx={{ ml: 2, mt: 1 }}>
+                          <Box sx={{ mb: 1.5 }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white', mb: 0.5 }}>
+                              Nazwa
+                            </Typography>
+                            <Typography sx={{ 
+                              fontSize: '11px', 
+                              color: 'white', 
+                              fontStyle: 'italic',
+                              lineHeight: 1.3
+                            }}>
+                              MIEJSCOWE PLANY ZAGOSPODAROWANIA PRZESTRZENNEGO
+                            </Typography>
+                          </Box>
+                          
+                          <Box>
+                            <Typography sx={{ fontSize: '11px', color: 'white', mb: 0.5 }}>
+                              Grupa
+                            </Typography>
+                            <Typography sx={{ 
+                              fontSize: '11px', 
+                              color: 'white', 
+                              fontStyle: 'italic'
+                            }}>
+                              Brak grupy nadrzędnej
+                            </Typography>
+                          </Box>
+                        </Box>
+                      )}
                     </Box>
-                  )}
-                </Box>
 
-                {/* Sekcja: Pobieranie */}
-                <Box sx={{ mb: 1.5 }}>
-                  <Box
-                    onClick={() => toggleSection('warstwa-pobieranie')}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      mb: 1,
-                      '&:hover': { color: '#4fc3f7' }
-                    }}
-                  >
-                    {expandedSections['warstwa-pobieranie'] ? 
-                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
-                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
-                    }
-                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
-                      Pobieranie
-                    </Typography>
-                    <Box sx={{ 
-                      ml: 1, 
-                      width: 14, 
-                      height: 14, 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      bgcolor: 'rgba(100, 100, 100, 0.8)',
-                      borderRadius: '2px',
-                      border: '1px solid rgba(255,255,255,0.2)'
-                    }}>
-                      <Box sx={{ 
-                        width: 6, 
-                        height: 6, 
-                        bgcolor: 'rgba(255, 255, 255, 0.4)', 
-                        borderRadius: '1px'
-                      }} />
-                    </Box>
-                  </Box>
-                  
-                  {expandedSections['warstwa-pobieranie'] && (
-                    <Box sx={{ ml: 2, mt: 1 }}>
-                      <Typography sx={{ 
-                        fontSize: '10px', 
-                        color: 'rgba(255, 255, 255, 0.8)', 
-                        mb: 1,
-                        fontStyle: 'italic'
-                      }}>
-                        Poniższe funkcje dostępne są w trybie edycji po zalogowaniu
-                      </Typography>
+                    {/* Sekcja: Pobieranie - jak na screenie z ikoną kłódki */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box
+                        onClick={() => toggleSection('grupa-pobieranie')}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          mb: 1,
+                          '&:hover': { color: '#4fc3f7' }
+                        }}
+                      >
+                        {expandedSections['grupa-pobieranie'] ? 
+                          <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                          <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                        }
+                        <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                          Pobieranie
+                        </Typography>
+                        {/* Ikona kłódki z Material-UI tooltipem */}
+                        <Tooltip 
+                          title="Poniższe funkcje dostępne są w trybie edycji po zalogowaniu"
+                          placement="top"
+                          arrow
+                          enterDelay={0}
+                          leaveDelay={0}
+                        >
+                          <Box sx={{ 
+                            ml: 1, 
+                            width: 14, 
+                            height: 14, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            cursor: 'help'
+                          }}>
+                            <Box sx={{ 
+                              width: 8, 
+                              height: 6, 
+                              border: '1px solid rgba(255, 255, 255, 0.6)', 
+                              borderRadius: '2px 2px 0 0',
+                              position: 'relative',
+                              '&::after': {
+                                content: '""',
+                                position: 'absolute',
+                                bottom: -3,
+                                left: -1,
+                                width: 10,
+                                height: 4,
+                                bgcolor: 'rgba(255, 255, 255, 0.6)',
+                                borderRadius: '0 0 2px 2px'
+                              }
+                            }} />
+                          </Box>
+                        </Tooltip>
+                      </Box>
                       
-                      <Box sx={{ ml: 0.5 }}>
-                        <Typography sx={{ 
-                          fontSize: '10px', 
-                          color: 'rgba(255, 255, 255, 0.6)', 
-                          mb: 0.5 
-                        }}>
-                          Warstwa
+                      {expandedSections['grupa-pobieranie'] && (
+                        <Box sx={{ ml: 2, mt: 1 }}>
+                          <Box
+                            sx={{
+                              bgcolor: 'rgba(70, 80, 90, 0.8)',
+                              border: '1px solid rgba(100, 110, 120, 0.6)',
+                              borderRadius: '4px',
+                              px: 2,
+                              py: 0.7,
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                              color: 'white',
+                              fontWeight: 500,
+                              textAlign: 'center',
+                              width: 'fit-content',
+                              '&:hover': {
+                                bgcolor: 'rgba(79, 195, 247, 0.2)',
+                                borderColor: 'rgba(79, 195, 247, 0.4)'
+                              }
+                            }}
+                            onClick={() => console.log('Pobierz grupę')}
+                          >
+                            Grupa
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+
+                    {/* Sekcja: Widoczność - jak na screenie */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box
+                        onClick={() => toggleSection('grupa-widocznosc')}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          mb: 1,
+                          '&:hover': { color: '#4fc3f7' }
+                        }}
+                      >
+                        {expandedSections['grupa-widocznosc'] ? 
+                          <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                          <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                        }
+                        <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                          Widoczność
                         </Typography>
                       </Box>
+                      
+                      {expandedSections['grupa-widocznosc'] && (
+                        <Box sx={{ ml: 2, mt: 1 }}>
+                          {/* Domyślne wyświetlanie grupy z checkboxem */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white' }}>
+                              Domyślne wyświetlanie grupy
+                            </Typography>
+                            <Box
+                              sx={{
+                                width: 16,
+                                height: 16,
+                                border: '1px solid rgba(255, 255, 255, 0.5)',
+                                borderRadius: '2px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                bgcolor: checkboxStates.grupaDomyslneWyswietlanie ? 'rgba(79, 195, 247, 0.3)' : 'transparent',
+                                '&:hover': {
+                                  borderColor: '#4fc3f7'
+                                }
+                              }}
+                              onClick={() => toggleCheckbox('grupaDomyslneWyswietlanie')}
+                            >
+                              {/* Checkmark - tylko gdy zaznaczone */}
+                              {checkboxStates.grupaDomyslneWyswietlanie && (
+                                <Box sx={{ 
+                                  width: 8, 
+                                  height: 4, 
+                                  borderLeft: '2px solid white',
+                                  borderBottom: '2px solid white',
+                                  transform: 'rotate(-45deg)',
+                                  mt: '-1px'
+                                }} />
+                              )}
+                            </Box>
+                          </Box>
+                          
+                          {/* Przycisk Zapisz */}
+                          <Box
+                            sx={{
+                              bgcolor: 'rgba(70, 80, 90, 0.8)',
+                              border: '1px solid rgba(100, 110, 120, 0.6)',
+                              borderRadius: '4px',
+                              px: 2,
+                              py: 0.7,
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                              color: 'white',
+                              fontWeight: 500,
+                              textAlign: 'center',
+                              width: 'fit-content',
+                              '&:hover': {
+                                bgcolor: 'rgba(79, 195, 247, 0.2)',
+                                borderColor: 'rgba(79, 195, 247, 0.4)'
+                              }
+                            }}
+                            onClick={() => console.log('Zapisz widoczność grupy')}
+                          >
+                            Zapisz
+                          </Box>
+                        </Box>
+                      )}
                     </Box>
-                  )}
-                </Box>
 
-                {/* Sekcja: Widoczność */}
-                <Box sx={{ mb: 1.5 }}>
-                  <Box
-                    onClick={() => toggleSection('warstwa-widocznosc')}
-                    sx={{
-                      display: 'flex',
-                      alignItems:'center',
-                      cursor: 'pointer',
-                      mb: 1,
-                      '&:hover': { color: '#4fc3f7' }
-                    }}
-                  >
-                    {expandedSections['warstwa-widocznosc'] ? 
-                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
-                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
-                    }
-                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
-                      Widoczność
-                    </Typography>
-                  </Box>
-                  
-                  {expandedSections['warstwa-widocznosc'] && (
-                    <Box sx={{ ml: 2, mt: 1 }}>
-                      <Typography sx={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.7)' }}>
-                        Ustawienia widoczności warstwy
-                      </Typography>
+                    {/* Sekcja: Informacje szczegółowe - jak na screenie */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box
+                        onClick={() => toggleSection('grupa-informacje-szczegolowe')}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          mb: 1,
+                          '&:hover': { color: '#4fc3f7' }
+                        }}
+                      >
+                        {expandedSections['grupa-informacje-szczegolowe'] ? 
+                          <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                          <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                        }
+                        <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                          Informacje szczegółowe
+                        </Typography>
+                      </Box>
+                      
+                      {expandedSections['grupa-informacje-szczegolowe'] && (
+                        <Box sx={{ ml: 2, mt: 1 }}>
+                          {/* Legenda z przyciskiem Pokaż */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white' }}>
+                              Legenda
+                            </Typography>
+                            <Box
+                              sx={{
+                                bgcolor: 'rgba(70, 80, 90, 0.8)',
+                                border: '1px solid rgba(100, 110, 120, 0.6)',
+                                borderRadius: '4px',
+                                px: 2,
+                                py: 0.7,
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                                color: 'white',
+                                fontWeight: 500,
+                                textAlign: 'center',
+                                '&:hover': {
+                                  bgcolor: 'rgba(79, 195, 247, 0.2)',
+                                  borderColor: 'rgba(79, 195, 247, 0.4)'
+                                }
+                              }}
+                              onClick={() => console.log('Pokaż legendę grupy')}
+                            >
+                              Pokaż
+                            </Box>
+                          </Box>
+                        </Box>
+                      )}
                     </Box>
-                  )}
-                </Box>
+                  </>
+                ) : (
+                  <>
+                    {/* WŁAŚCIWOŚCI WARSTWY - gdy selectedLayer.typ !== 'grupa' (wektor/raster) */}
+                    
+                    {/* Sekcja: Informacje ogólne */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box
+                        onClick={() => toggleSection('warstwa-informacje-ogolne')}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          mb: 1,
+                          '&:hover': { color: '#4fc3f7' }
+                        }}
+                      >
+                        {expandedSections['warstwa-informacje-ogolne'] ? 
+                          <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                          <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                        }
+                        <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                          Informacje ogólne
+                        </Typography>
+                      </Box>
+                      
+                      {expandedSections['warstwa-informacje-ogolne'] && (
+                        <Box sx={{ ml: 2, mt: 1 }}>
+                          <Box sx={{ mb: 1.5 }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white', mb: 0.5 }}>
+                              Nazwa
+                            </Typography>
+                            <Typography sx={{ 
+                              fontSize: '11px', 
+                              color: 'white', 
+                              fontStyle: 'italic',
+                              lineHeight: 1.3
+                            }}>
+                              {selectedLayer.nazwa}
+                            </Typography>
+                          </Box>
+                          
+                          <Box sx={{ mb: 1.5 }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white', mb: 0.5 }}>
+                              Grupa
+                            </Typography>
+                            <Typography sx={{ 
+                              fontSize: '11px', 
+                              color: 'white', 
+                              fontStyle: 'italic'
+                            }}>
+                              {selectedLayer.id ? (findParentGroup(warstwy, selectedLayer.id)?.nazwa || 'Brak grupy nadrzędnej') : 'Brak grupy nadrzędnej'}
+                            </Typography>
+                          </Box>
+                          
+                          <Box sx={{ mb: 1.5 }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white', mb: 0.5 }}>
+                              Typ geometrii
+                            </Typography>
+                            <Typography sx={{ 
+                              fontSize: '11px', 
+                              color: 'white', 
+                              fontStyle: 'italic'
+                            }}>
+                              Multi-polygon
+                            </Typography>
+                          </Box>
+                          
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white' }}>
+                              Tabela atrybutów
+                            </Typography>
+                            <Box
+                              sx={{
+                                bgcolor: 'rgba(70, 80, 90, 0.8)',
+                                border: '1px solid rgba(100, 110, 120, 0.6)',
+                                borderRadius: '4px',
+                                px: 2,
+                                py: 0.7,
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                                color: 'white',
+                                fontWeight: 500,
+                                textAlign: 'center',
+                                '&:hover': {
+                                  bgcolor: 'rgba(79, 195, 247, 0.2)',
+                                  borderColor: 'rgba(79, 195, 247, 0.4)'
+                                }
+                              }}
+                              onClick={() => console.log('Pokaż tabelę atrybutów warstwy')}
+                            >
+                              Pokaż
+                            </Box>
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
 
-                {/* Sekcja: Informacje szczegółowe */}
-                <Box sx={{ mb: 1.5 }}>
-                  <Box
-                    onClick={() => toggleSection('warstwa-informacje-szczegolowe')}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      cursor: 'pointer',
-                      mb: 1,
-                      '&:hover': { color: '#4fc3f7' }
-                    }}
-                  >
-                    {expandedSections['warstwa-informacje-szczegolowe'] ? 
-                      <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
-                      <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
-                    }
-                    <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
-                      Informacje szczegółowe
-                    </Typography>
-                  </Box>
-                  
-                  {expandedSections['warstwa-informacje-szczegolowe'] && (
-                    <Box sx={{ ml: 2, mt: 1 }}>
-                      <Typography sx={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.7)' }}>
-                        Szczegóły warstwy
-                      </Typography>
+                    {/* Sekcja: Pobieranie */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box
+                        onClick={() => toggleSection('warstwa-pobieranie')}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          mb: 1,
+                          '&:hover': { color: '#4fc3f7' }
+                        }}
+                      >
+                        {expandedSections['warstwa-pobieranie'] ? 
+                          <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                          <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                        }
+                        <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                          Pobieranie
+                        </Typography>
+                        {/* Ikona kłódki z Material-UI tooltipem */}
+                        <Tooltip 
+                          title="Poniższe funkcje dostępne są w trybie edycji po zalogowaniu"
+                          placement="top"
+                          arrow
+                          enterDelay={0}
+                          leaveDelay={0}
+                        >
+                          <Box 
+                            sx={{ 
+                              ml: 1, 
+                              width: 14, 
+                              height: 14, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              cursor: 'help'
+                            }}
+                          >
+                            <Box sx={{ 
+                              width: 8, 
+                              height: 6, 
+                              border: '1px solid rgba(255, 255, 255, 0.6)', 
+                              borderRadius: '2px 2px 0 0',
+                              position: 'relative',
+                              '&::after': {
+                                content: '""',
+                                position: 'absolute',
+                                bottom: -3,
+                                left: -1,
+                                width: 10,
+                                height: 4,
+                                bgcolor: 'rgba(255, 255, 255, 0.6)',
+                                borderRadius: '0 0 2px 2px'
+                              }
+                            }} />
+                          </Box>
+                        </Tooltip>
+                      </Box>
+                      
+                      {expandedSections['warstwa-pobieranie'] && (
+                        <Box sx={{ ml: 2, mt: 1 }}>
+                          <Box
+                            sx={{
+                              bgcolor: 'rgba(70, 80, 90, 0.8)',
+                              border: '1px solid rgba(100, 110, 120, 0.6)',
+                              borderRadius: '4px',
+                              px: 2,
+                              py: 0.7,
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                              color: 'white',
+                              fontWeight: 500,
+                              textAlign: 'center',
+                              width: 'fit-content',
+                              '&:hover': {
+                                bgcolor: 'rgba(79, 195, 247, 0.2)',
+                                borderColor: 'rgba(79, 195, 247, 0.4)'
+                              }
+                            }}
+                            onClick={() => console.log('Pobierz warstwę')}
+                          >
+                            Warstwa
+                          </Box>
+                        </Box>
+                      )}
                     </Box>
-                  )}
-                </Box>
+
+                    {/* Sekcja: Widoczność */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box
+                        onClick={() => toggleSection('warstwa-widocznosc')}
+                        sx={{
+                          display: 'flex',
+                          alignItems:'center',
+                          cursor: 'pointer',
+                          mb: 1,
+                          '&:hover': { color: '#4fc3f7' }
+                        }}
+                      >
+                        {expandedSections['warstwa-widocznosc'] ? 
+                          <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                          <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                        }
+                        <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                          Widoczność
+                        </Typography>
+                      </Box>
+                      
+                      {expandedSections['warstwa-widocznosc'] && (
+                        <Box sx={{ ml: 2, mt: 1 }}>
+                          {/* Widoczność kolumn z przyciskiem Edytuj */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white' }}>
+                              Widoczność kolumn
+                            </Typography>
+                            <Box
+                              sx={{
+                                bgcolor: 'rgba(70, 80, 90, 0.8)',
+                                border: '1px solid rgba(100, 110, 120, 0.6)',
+                                borderRadius: '4px',
+                                px: 1.5,
+                                py: 0.6,
+                                cursor: 'pointer',
+                                fontSize: '10px',
+                                color: 'white',
+                                fontWeight: 500,
+                                textAlign: 'center',
+                                '&:hover': {
+                                  bgcolor: 'rgba(79, 195, 247, 0.2)',
+                                  borderColor: 'rgba(79, 195, 247, 0.4)'
+                                }
+                              }}
+                              onClick={() => console.log('Edytuj widoczność kolumn')}
+                            >
+                              Edytuj
+                            </Box>
+                          </Box>
+
+                          {/* Domyślne wyświetlanie warstwy z checkboxem */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white' }}>
+                              Domyślne wyświetlanie warstwy
+                            </Typography>
+                            <Box
+                              sx={{
+                                width: 16,
+                                height: 16,
+                                border: '1px solid rgba(255, 255, 255, 0.5)',
+                                borderRadius: '2px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                bgcolor: checkboxStates.warstwaDomyslneWyswietlanie ? 'rgba(79, 195, 247, 0.3)' : 'transparent',
+                                '&:hover': {
+                                  borderColor: '#4fc3f7'
+                                }
+                              }}
+                              onClick={() => toggleCheckbox('warstwaDomyslneWyswietlanie')}
+                            >
+                              {/* Checkmark - tylko gdy zaznaczone */}
+                              {checkboxStates.warstwaDomyslneWyswietlanie && (
+                                <Box sx={{ 
+                                  width: 8, 
+                                  height: 4, 
+                                  borderLeft: '2px solid white',
+                                  borderBottom: '2px solid white',
+                                  transform: 'rotate(-45deg)',
+                                  mt: '-1px'
+                                }} />
+                              )}
+                            </Box>
+                          </Box>
+
+                          {/* Widoczność od zadanej skali z pustym checkboxem */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white' }}>
+                              Widoczność od zadanej skali
+                            </Typography>
+                            <Box
+                              sx={{
+                                width: 16,
+                                height: 16,
+                                border: '1px solid rgba(255, 255, 255, 0.5)',
+                                borderRadius: '2px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                bgcolor: checkboxStates.warstwaWidocznoscOdSkali ? 'rgba(79, 195, 247, 0.3)' : 'transparent',
+                                '&:hover': {
+                                  borderColor: '#4fc3f7'
+                                }
+                              }}
+                              onClick={() => toggleCheckbox('warstwaWidocznoscOdSkali')}
+                            >
+                              {/* Checkmark - tylko gdy zaznaczone */}
+                              {checkboxStates.warstwaWidocznoscOdSkali && (
+                                <Box sx={{ 
+                                  width: 8, 
+                                  height: 4, 
+                                  borderLeft: '2px solid white',
+                                  borderBottom: '2px solid white',
+                                  transform: 'rotate(-45deg)',
+                                  mt: '-1px'
+                                }} />
+                              )}
+                            </Box>
+                          </Box>
+
+                          {/* Widoczność w trybie opublikowanym z checkboxem */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white' }}>
+                              Widoczność w trybie opublikowanym
+                            </Typography>
+                            <Box
+                              sx={{
+                                width: 16,
+                                height: 16,
+                                border: '1px solid rgba(255, 255, 255, 0.5)',
+                                borderRadius: '2px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                bgcolor: checkboxStates.warstwaWidocznoscTrybOpublikowany ? 'rgba(79, 195, 247, 0.3)' : 'transparent',
+                                '&:hover': {
+                                  borderColor: '#4fc3f7'
+                                }
+                              }}
+                              onClick={() => toggleCheckbox('warstwaWidocznoscTrybOpublikowany')}
+                            >
+                              {/* Checkmark - tylko gdy zaznaczone */}
+                              {checkboxStates.warstwaWidocznoscTrybOpublikowany && (
+                                <Box sx={{ 
+                                  width: 8, 
+                                  height: 4, 
+                                  borderLeft: '2px solid white',
+                                  borderBottom: '2px solid white',
+                                  transform: 'rotate(-45deg)',
+                                  mt: '-1px'
+                                }} />
+                              )}
+                            </Box>
+                          </Box>
+
+                          {/* Przycisk Zapisz */}
+                          <Box
+                            sx={{
+                              bgcolor: 'rgba(70, 80, 90, 0.8)',
+                              border: '1px solid rgba(100, 110, 120, 0.6)',
+                              borderRadius: '4px',
+                              px: 2,
+                              py: 0.7,
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                              color: 'white',
+                              fontWeight: 500,
+                              textAlign: 'center',
+                              width: 'fit-content',
+                              mb: 2,
+                              '&:hover': {
+                                bgcolor: 'rgba(79, 195, 247, 0.2)',
+                                borderColor: 'rgba(79, 195, 247, 0.4)'
+                              }
+                            }}
+                            onClick={() => console.log('Zapisz ustawienia widoczności warstwy')}
+                          >
+                            Zapisz
+                          </Box>
+
+                          {/* Przezroczystość warstwy ze sliderem */}
+                          <Box sx={{ mb: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                              <Typography sx={{ fontSize: '11px', color: 'white' }}>
+                                Przezroczystość warstwy
+                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Box
+                                  sx={{
+                                    bgcolor: 'rgba(70, 80, 90, 0.8)',
+                                    border: '1px solid rgba(100, 110, 120, 0.6)',
+                                    borderRadius: '4px',
+                                    px: 1,
+                                    py: 0.3,
+                                    fontSize: '10px',
+                                    color: 'white',
+                                    minWidth: '30px',
+                                    textAlign: 'center'
+                                  }}
+                                >
+                                  60
+                                </Box>
+                                <Typography sx={{ fontSize: '10px', color: 'white' }}>
+                                  %
+                                </Typography>
+                              </Box>
+                            </Box>
+                            
+                            {/* Slider */}
+                            <Box sx={{ position: 'relative', height: '6px', bgcolor: 'rgba(255, 255, 255, 0.3)', borderRadius: '3px' }}>
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  left: 0,
+                                  top: 0,
+                                  width: '60%',
+                                  height: '100%',
+                                  bgcolor: '#4fc3f7',
+                                  borderRadius: '3px'
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  left: '60%',
+                                  top: '50%',
+                                  transform: 'translate(-50%, -50%)',
+                                  width: 14,
+                                  height: 14,
+                                  bgcolor: 'white',
+                                  borderRadius: '50%',
+                                  cursor: 'pointer',
+                                  '&:hover': {
+                                    bgcolor: '#4fc3f7'
+                                  }
+                                }}
+                                onClick={() => console.log('Zmień przezroczystość warstwy')}
+                              />
+                            </Box>
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+
+                    {/* Sekcja: Informacje szczegółowe */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box
+                        onClick={() => toggleSection('warstwa-informacje-szczegolowe')}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          mb: 1,
+                          '&:hover': { color: '#4fc3f7' }
+                        }}
+                      >
+                        {expandedSections['warstwa-informacje-szczegolowe'] ? 
+                          <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                          <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                        }
+                        <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                          Informacje szczegółowe
+                        </Typography>
+                      </Box>
+                      
+                      {expandedSections['warstwa-informacje-szczegolowe'] && (
+                        <Box sx={{ ml: 2, mt: 1 }}>
+                          {/* Legenda z przyciskiem Pokaż */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Typography sx={{ fontSize: '11px', color: 'white' }}>
+                              Legenda
+                            </Typography>
+                            <Box
+                              sx={{
+                                bgcolor: 'rgba(70, 80, 90, 0.8)',
+                                border: '1px solid rgba(100, 110, 120, 0.6)',
+                                borderRadius: '4px',
+                                px: 2,
+                                py: 0.7,
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                                color: 'white',
+                                fontWeight: 500,
+                                textAlign: 'center',
+                                '&:hover': {
+                                  bgcolor: 'rgba(79, 195, 247, 0.2)',
+                                  borderColor: 'rgba(79, 195, 247, 0.4)'
+                                }
+                              }}
+                              onClick={() => console.log('Pokaż legendę warstwy')}
+                            >
+                              Pokaż
+                            </Box>
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+
+                    {/* Sekcja: Styl warstwy - TYLKO DLA WARSTW, NIE DLA GRUP */}
+                    <Box sx={{ mb: 1.5 }}>
+                      <Box
+                        onClick={() => toggleSection('warstwa-styl-warstwy')}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          mb: 1,
+                          '&:hover': { color: '#4fc3f7' }
+                        }}
+                      >
+                        {expandedSections['warstwa-styl-warstwy'] ? 
+                          <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
+                          <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+                        }
+                        <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+                          Styl warstwy
+                        </Typography>
+                        {/* Ikona kłódki z Material-UI tooltipem */}
+                        <Tooltip 
+                          title="Poniższe funkcje dostępne są w trybie edycji po zalogowaniu"
+                          placement="top"
+                          arrow
+                          enterDelay={0}
+                          leaveDelay={0}
+                        >
+                          <Box 
+                            sx={{ 
+                              ml: 1, 
+                              width: 14, 
+                              height: 14, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              cursor: 'help'
+                            }}
+                          >
+                            <Box sx={{ 
+                              width: 8, 
+                              height: 6, 
+                              border: '1px solid rgba(255, 255, 255, 0.6)', 
+                              borderRadius: '2px 2px 0 0',
+                              position: 'relative',
+                              '&::after': {
+                                content: '""',
+                                position: 'absolute',
+                                bottom: -3,
+                                left: -1,
+                                width: 10,
+                                height: 4,
+                                bgcolor: 'rgba(255, 255, 255, 0.6)',
+                                borderRadius: '0 0 2px 2px'
+                              }
+                            }} />
+                          </Box>
+                        </Tooltip>
+                      </Box>
+                      
+                      {expandedSections['warstwa-styl-warstwy'] && (
+                        <Box sx={{ ml: 2, mt: 1 }}>
+                          {/* 3 przyciski jak na screenie */}
+                          <Box sx={{ display: 'flex', gap: 0.5, mb: 1.5, flexWrap: 'wrap' }}>
+                            <Box
+                              sx={{
+                                bgcolor: 'rgba(70, 80, 90, 0.8)',
+                                border: '1px solid rgba(100, 110, 120, 0.6)',
+                                borderRadius: '4px',
+                                px: 1.5,
+                                py: 0.6,
+                                cursor: 'pointer',
+                                fontSize: '10px',
+                                color: 'white',
+                                fontWeight: 500,
+                                minWidth: '60px',
+                                textAlign: 'center',
+                                '&:hover': {
+                                  bgcolor: 'rgba(79, 195, 247, 0.2)',
+                                  borderColor: 'rgba(79, 195, 247, 0.4)'
+                                }
+                              }}
+                              onClick={handleEditLayerStyle}
+                            >
+                              Edytuj
+                            </Box>
+                            
+                            <Box
+                              sx={{
+                                bgcolor: 'rgba(70, 80, 90, 0.8)',
+                                border: '1px solid rgba(100, 110, 120, 0.6)',
+                                borderRadius: '4px',
+                                px: 1.5,
+                                py: 0.6,
+                                cursor: 'pointer',
+                                fontSize: '10px',
+                                color: 'white',
+                                fontWeight: 500,
+                                minWidth: '70px',
+                                textAlign: 'center',
+                                '&:hover': {
+                                  bgcolor: 'rgba(79, 195, 247, 0.2)',
+                                  borderColor: 'rgba(79, 195, 247, 0.4)'
+                                }
+                              }}
+                              onClick={handleManageLayer}
+                            >
+                              Zarządzaj
+                            </Box>
+                            
+                            <Box
+                              sx={{
+                                bgcolor: 'rgba(70, 80, 90, 0.8)',
+                                border: '1px solid rgba(100, 110, 120, 0.6)',
+                                borderRadius: '4px',
+                                px: 1.5,
+                                py: 0.6,
+                                cursor: 'pointer',
+                                fontSize: '10px',
+                                color: 'white',
+                                fontWeight: 500,
+                                minWidth: '90px',
+                                textAlign: 'center',
+                                '&:hover': {
+                                  bgcolor: 'rgba(79, 195, 247, 0.2)',
+                                  borderColor: 'rgba(79, 195, 247, 0.4)'
+                                }
+                              }}
+                              onClick={handleLayerLabeling}
+                            >
+                              Etykietowanie
+                            </Box>
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+                  </>
+                )}
               </>
             ) : (
               <>

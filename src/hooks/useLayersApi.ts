@@ -1,39 +1,64 @@
+// ===================================================================
+// HOOK DO ZARZĄDZANIA API WARSTW MAP
+// ===================================================================
+// Ten hook zawiera całą logikę komunikacji z backendem dotyczącą warstw
+// Obsługuje: pobieranie, aktualizację widoczności, zmianę kolejności, rozwijanie
+
 import { useState, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 
+// ===================================================================
+// INTERFACE WARSTWY - Definicja struktury danych warstwy mapy
+// ===================================================================
 export interface Warstwa {
-  id: string;
-  nazwa: string;
-  widoczna: boolean;
-  typ: 'grupa' | 'wektor' | 'raster';
-  dzieci?: Warstwa[];
-  rozwinięta?: boolean;
+  id: string;          // Unikalny identyfikator warstwy
+  nazwa: string;       // Nazwa wyświetlana użytkownikowi
+  widoczna: boolean;   // Czy warstwa jest widoczna na mapie
+  typ: 'grupa' | 'wektor' | 'raster';  // Typ warstwy (grupa, dane wektorowe, rastrowe)
+  dzieci?: Warstwa[];  // Opcjonalne: podwarstwy (dla grup)
+  rozwinięta?: boolean; // Opcjonalne: czy grupa jest rozwinięta w drzewie
 }
 
+// ===================================================================
+// INTERFACE ZWRACANEGO OBIEKTU - Co hook udostępnia komponentom
+// ===================================================================
 interface UseLayersApiReturn {
-  loading: boolean;
-  error: string | null;
-  fetchLayers: () => Promise<Warstwa[]>;
-  updateLayerVisibility: (id: string, visible: boolean) => Promise<void>;
-  updateLayerOrder: (layers: Warstwa[]) => Promise<void>;
-  toggleLayerExpansion: (id: string, expanded: boolean) => Promise<void>;
-  clearError: () => void;
+  loading: boolean;                                           // Stan ładowania
+  error: string | null;                                       // Błąd API lub null
+  fetchLayers: () => Promise<Warstwa[]>;                     // Funkcja pobierania warstw
+  updateLayerVisibility: (id: string, visible: boolean) => Promise<void>; // Zmiana widoczności
+  updateLayerOrder: (layers: Warstwa[]) => Promise<void>;    // Zmiana kolejności
+  toggleLayerExpansion: (id: string, expanded: boolean) => Promise<void>; // Rozwijanie/zwijanie grup
+  clearError: () => void;                                     // Czyszczenie błędów
 }
 
+// ===================================================================
+// GŁÓWNA FUNKCJA HOOK - Implementacja logiki API
+// ===================================================================
 export const useLayersApi = (): UseLayersApiReturn => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
+  // ===================================================================
+  // STAN LOKALNY HOOK - Zarządzanie stanem ładowania i błędów
+  // ===================================================================
+  const [loading, setLoading] = useState(false);        // Czy trwa operacja API
+  const [error, setError] = useState<string | null>(null); // Ostatni błąd API
 
+  // Funkcja czyszczenia błędów
   const clearError = useCallback(() => setError(null), []);
 
+  // ===================================================================
+  // FUNKCJA POBIERANIA WARSTW - Główna funkcja do ładowania danych
+  // ===================================================================
   const fetchLayers = useCallback(async (): Promise<Warstwa[]> => {
-    setLoading(true);
-    setError(null);
+    setLoading(true);  // Rozpoczynamy ładowanie
+    setError(null);    // Czyścimy poprzednie błędy
     
     try {
-      // Fallback do mock danych jeśli API nie działa
+      // Próbujemy pobrać dane z API, jeśli nie działa - używamy mock danych
       const layers = await apiClient.get<Warstwa[]>('/layers').catch(() => {
-        // Mock data jako fallback
+        // ===================================================================
+        // MOCK DATA - Tymczasowe dane testowe gdy API nie działa
+        // ===================================================================
         return [
           {
             id: 'obszar-rewitalizacji',
