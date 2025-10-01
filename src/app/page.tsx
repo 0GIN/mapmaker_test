@@ -65,12 +65,16 @@ declare global {
 }
 
 export default function HomePage() {
+  // Stała dla strefy drop głównego poziomu
+  const MAIN_LEVEL_DROP_ID = '__main_level__';
+  
   // UI State
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showMainLevelZone, setShowMainLevelZone] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
-  const [dropPosition, setDropPosition] = useState<'before' | 'after'>('before');
+  const [dropPosition, setDropPosition] = useState<'before' | 'after' | 'inside'>('before');
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<'wszystko' | 'wektor' | 'raster' | 'wms'>('wszystko');
 
@@ -383,6 +387,7 @@ export default function HomePage() {
   const handleDragEnd = () => {
     setDraggedItem(null);
     setDropTarget(null);
+    setShowMainLevelZone(false); // Ukryj strefę główną po zakończeniu przeciągania
   };
 
   const handleDragEnter = (e: React.DragEvent, id: string) => {
@@ -464,80 +469,295 @@ export default function HomePage() {
       e.dataTransfer.dropEffect = 'move';
     }
     
-    // Aktualizuj pozycję drop w czasie rzeczywistym podczas przeciągania
+    // Zaawansowana detekcja typu operacji podczas przeciągania
     if (draggedItem && id && id !== draggedItem) {
       const isValidTarget = !isDescendant(draggedItem, id);
       if (isValidTarget) {
+        const target = findLayerById(warstwy, id);
+        if (!target) return;
+        
         const rect = e.currentTarget.getBoundingClientRect();
         const mouseY = e.clientY;
-        const elementMiddle = rect.top + rect.height / 2;
+        const elementTop = rect.top;
+        const elementHeight = rect.height;
+        const relativeY = (mouseY - elementTop) / elementHeight;
         
-        const position = mouseY < elementMiddle ? 'before' : 'after';
+        let position: 'before' | 'after' | 'inside' = 'before';
         
+        // Jeśli target to grupa i mysz jest w środkowej części (25%-75%), to group drop
+        if (target.typ === 'grupa' && relativeY > 0.25 && relativeY < 0.75) {
+          position = 'inside';
+        } else {
+          // Standardowe before/after dla reordering
+          position = relativeY < 0.5 ? 'before' : 'after';
+        }
+        
+        // Aktualizuj state tylko gdy się zmieni
         if (dropTarget !== id || dropPosition !== position) {
           setDropTarget(id);
           setDropPosition(position);
+          
+          // Wizualne wskazówki
+          if (position === 'inside') {
+            console.log(`🗂️ Group drop mode: ${draggedItem} → into ${id}`);
+          } else {
+            console.log(`📋 Reorder mode: ${draggedItem} → ${position} ${id}`);
+          }
         }
       }
     }
+  };
+
+  const handleLayerTreeDragOver = (e: React.DragEvent) => {
+    if (!draggedItem) return;
+    
+    // Sprawdź pozycję myszy względem kontenera
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX;
+    const leftEdge = rect.left;
+    
+    // Jeśli mysz jest w pierwszych 30px od lewej krawędzi, pokaż strefę główną
+    const isInLeftZone = mouseX - leftEdge < 30;
+    
+    if (isInLeftZone !== showMainLevelZone) {
+      setShowMainLevelZone(isInLeftZone);
+      if (isInLeftZone) {
+        console.log('🏠 Entering main level zone');
+      } else {
+        console.log('🔄 Leaving main level zone');
+      }
+    }
+  };
+
+  const handleMainLevelDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+    
+    if (draggedItem && dropTarget !== MAIN_LEVEL_DROP_ID) {
+      setDropTarget(MAIN_LEVEL_DROP_ID);
+      setDropPosition('after'); // Nie używane, ale dla kompatybilności
+      console.log('🏠 Main level hover');
+    }
+  };
+
+  // ===================================================================
+  // ZAAWANSOWANE ZARZĄDZANIE HIERARCHIĄ WARSTW I GRUP
+  // ===================================================================
+  
+  /**
+   * Znajduje element w hierarchii i zwraca ścieżkę do niego
+   */
+  const findElementPath = (items: Warstwa[], targetId: string, currentPath: number[] = []): number[] | null => {
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].id === targetId) {
+        return [...currentPath, i];
+      }
+      if (items[i].dzieci) {
+        const found = findElementPath(items[i].dzieci!, targetId, [...currentPath, i]);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  /**
+   * Usuwa element z hierarchii na podstawie ścieżki
+   */
+  const removeElementAtPath = (items: Warstwa[], path: number[]): { newItems: Warstwa[], removedElement: Warstwa | null } => {
+    if (path.length === 0) return { newItems: items, removedElement: null };
+    
+    const newItems = [...items];
+    let current = newItems;
+    let removedElement: Warstwa | null = null;
+    
+    // Nawiguj do właściwego miejsca
+    for (let i = 0; i < path.length - 1; i++) {
+      if (current[path[i]].dzieci) {
+        current[path[i]] = { ...current[path[i]], dzieci: [...current[path[i]].dzieci!] };
+        current = current[path[i]].dzieci!;
+      }
+    }
+    
+    // Usuń element z ostatniego poziomu
+    const finalIndex = path[path.length - 1];
+    if (finalIndex >= 0 && finalIndex < current.length) {
+      removedElement = current[finalIndex];
+      current.splice(finalIndex, 1);
+    }
+    
+    return { newItems, removedElement };
+  };
+
+  /**
+   * Wstawia element w hierarchii na określonej pozycji
+   */
+  const insertElementAtPath = (items: Warstwa[], element: Warstwa, path: number[], position: 'before' | 'after' | 'inside'): Warstwa[] => {
+    if (path.length === 0) {
+      // Wstawianie na głównym poziomie
+      const newItems = [...items];
+      if (position === 'before') {
+        newItems.splice(0, 0, element);
+      } else {
+        newItems.push(element);
+      }
+      return newItems;
+    }
+    
+    const newItems = [...items];
+    let current = newItems;
+    
+    // Nawiguj do właściwego miejsca
+    for (let i = 0; i < path.length - 1; i++) {
+      if (current[path[i]].dzieci) {
+        current[path[i]] = { ...current[path[i]], dzieci: [...current[path[i]].dzieci!] };
+        current = current[path[i]].dzieci!;
+      }
+    }
+    
+    const finalIndex = path[path.length - 1];
+    
+    if (position === 'inside') {
+      // Wstawianie do grupy jako dziecko
+      if (current[finalIndex].typ === 'grupa') {
+        current[finalIndex] = {
+          ...current[finalIndex],
+          dzieci: current[finalIndex].dzieci ? [...current[finalIndex].dzieci, element] : [element],
+          rozwinięta: true // Automatycznie rozwiń grupę
+        };
+      }
+    } else if (position === 'before') {
+      current.splice(finalIndex, 0, element);
+    } else { // 'after'
+      current.splice(finalIndex + 1, 0, element);
+    }
+    
+    return newItems;
+  };
+
+  /**
+   * Określa typ operacji drop na podstawie pozycji myszy i typu elementu
+   */
+  const getDropOperation = (e: React.DragEvent, targetId: string): 'reorder' | 'move-to-group' | 'move-between-groups' => {
+    const target = findLayerById(warstwy, targetId);
+    if (!target) return 'reorder';
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseY = e.clientY;
+    const elementTop = rect.top;
+    const elementBottom = rect.bottom;
+    const elementHeight = rect.height;
+    
+    // Jeśli target to grupa i mysz jest w środkowej części (30%-70%), to move-to-group
+    if (target.typ === 'grupa') {
+      const relativeY = (mouseY - elementTop) / elementHeight;
+      if (relativeY > 0.3 && relativeY < 0.7) {
+        return 'move-to-group';
+      }
+    }
+    
+    return 'move-between-groups';
   };
 
   const handleDrop = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('🔴 DROP EVENT FIRED! Target:', targetId, 'Dragged:', draggedItem);
+    console.log('🔴 ADVANCED DROP! Target:', targetId, 'Dragged:', draggedItem);
     
     if (!draggedItem || draggedItem === targetId) {
-      console.log('❌ Invalid drop - same element or no dragged item');
+      console.log('❌ Invalid drop');
       setDropTarget(null);
       return;
     }
 
-    // Prosta funkcja reorderowania - działa rekursywnie na całej strukturze
-    const reorderItemsInTree = (items: Warstwa[]): Warstwa[] => {
-      // Sprawdź czy oba elementy są na tym poziomie
-      const draggedIndex = items.findIndex(item => item.id === draggedItem);
-      const targetIndex = items.findIndex(item => item.id === targetId);
+    // Specjalna obsługa dla strefy głównego poziomu
+    if (targetId === MAIN_LEVEL_DROP_ID) {
+      console.log('🏠 DROP TO MAIN LEVEL!');
       
-      if (draggedIndex !== -1 && targetIndex !== -1) {
-        // Oba elementy są na tym poziomie - reorder
-        const newItems = [...items];
-        const [draggedElement] = newItems.splice(draggedIndex, 1);
-        
-        // Wstaw przed lub po targecie w zależności od dropPosition
-        let insertIndex;
-        if (dropPosition === 'before') {
-          insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
-        } else { // 'after'
-          insertIndex = draggedIndex < targetIndex ? targetIndex : targetIndex + 1;
-        }
-        
-        newItems.splice(insertIndex, 0, draggedElement);
-        
-        console.log(`Reordered at level: moved ${draggedItem} ${dropPosition} ${targetId}`);
-        return newItems;
+      const draggedPath = findElementPath(warstwy, draggedItem);
+      if (!draggedPath) {
+        console.log('❌ Could not find dragged element path');
+        setDropTarget(null);
+        return;
+      }
+
+      let newWarstwy = [...warstwy];
+      
+      // Usuń element z aktualnej pozycji
+      const { newItems: itemsAfterRemoval, removedElement } = removeElementAtPath(newWarstwy, draggedPath);
+      if (!removedElement) {
+        console.log('❌ Could not remove element');
+        setDropTarget(null);
+        return;
       }
       
-      // Jeśli nie ma na tym poziomie, sprawdź dzieci
-      return items.map(item => ({
-        ...item,
-        dzieci: item.dzieci ? reorderItemsInTree(item.dzieci) : undefined
-      }));
-    };
-
-    const newWarstwy = reorderItemsInTree(warstwy);
-    console.log('🟡 Old warstwy:', warstwy);
-    console.log('🟠 New warstwy:', newWarstwy);
-    console.log('🔵 Are they different?', JSON.stringify(warstwy) !== JSON.stringify(newWarstwy));
-    
-    if (JSON.stringify(warstwy) !== JSON.stringify(newWarstwy)) {
+      // Dodaj na koniec głównego poziomu
+      newWarstwy = [...itemsAfterRemoval, removedElement];
+      
+      console.log('✅ Main level drop completed');
       setWarstwy(newWarstwy);
-      console.log('✅ State updated successfully');
-    } else {
-      console.log('❌ No change in state - reordering failed');
+      setDraggedItem(null);
+      setDropTarget(null);
+      return;
     }
 
+    // Sprawdź czy nie próbujemy wrzucić grupy do jej własnego dziecka
+    if (isDescendant(draggedItem, targetId)) {
+      console.log('❌ Cannot drop parent into its own child');
+      setDropTarget(null);
+      return;
+    }
+
+    const operation = getDropOperation(e, targetId);
+    console.log('🎯 Drop operation:', operation);
+
+    // Znajdź ścieżki do elementów
+    const draggedPath = findElementPath(warstwy, draggedItem);
+    const targetPath = findElementPath(warstwy, targetId);
+    
+    if (!draggedPath || !targetPath) {
+      console.log('❌ Could not find element paths');
+      setDropTarget(null);
+      return;
+    }
+
+    let newWarstwy = [...warstwy];
+    
+    // 1. Usuń przeciągnięty element
+    const { newItems: itemsAfterRemoval, removedElement } = removeElementAtPath(newWarstwy, draggedPath);
+    if (!removedElement) {
+      console.log('❌ Could not remove dragged element');
+      setDropTarget(null);
+      return;
+    }
+    
+    console.log('📦 Removed element:', removedElement.nazwa);
+    newWarstwy = itemsAfterRemoval;
+    
+    // 2. Znajdź nową ścieżkę do targetu (po usunięciu elementu)
+    const newTargetPath = findElementPath(newWarstwy, targetId);
+    if (!newTargetPath) {
+      console.log('❌ Could not find target after removal');
+      setDropTarget(null);
+      return;
+    }
+    
+    // 3. Wstaw element w nowym miejscu
+    if (operation === 'move-to-group') {
+      console.log('📁 Moving to group:', targetId);
+      newWarstwy = insertElementAtPath(newWarstwy, removedElement, newTargetPath, 'inside');
+    } else {
+      console.log('📋 Reordering/moving between groups:', dropPosition);
+      newWarstwy = insertElementAtPath(newWarstwy, removedElement, newTargetPath, dropPosition);
+    }
+
+    console.log('✅ Hierarchy operation completed');
+    setWarstwy(newWarstwy);
+    
     setDraggedItem(null);
     setDropTarget(null);
     setDropPosition('before');
@@ -552,91 +772,51 @@ export default function HomePage() {
       return;
     }
 
-    console.log(`🎯 Dropping at end of group: ${groupId}, dragged item: ${draggedItem}`);
-
-    // Funkcja do przeniesienia elementu na koniec grupy
-    const moveItemToEndOfGroup = (items: Warstwa[]): Warstwa[] => {
-      const newItems = [...items];
-      
-      // Usuń przeciągnięty element z aktualnej pozycji
-      const removeDraggedItem = (arr: Warstwa[]): Warstwa[] => {
-        return arr.reduce((acc: Warstwa[], item) => {
-          if (item.id === draggedItem) {
-            // Pomijamy ten element (usuwamy go)
-            return acc;
-          }
-          
-          const newItem = {
-            ...item,
-            dzieci: item.dzieci ? removeDraggedItem(item.dzieci) : undefined
-          };
-          acc.push(newItem);
-          return acc;
-        }, []);
-      };
-
-      // Znajdź przeciągnięty element
-      let draggedElement: Warstwa | null = null;
-      const findDraggedElement = (arr: Warstwa[]): void => {
-        arr.forEach(item => {
-          if (item.id === draggedItem) {
-            draggedElement = { ...item };
-          }
-          if (item.dzieci) {
-            findDraggedElement(item.dzieci);
-          }
-        });
-      };
-
-      findDraggedElement(newItems);
-      
-      if (!draggedElement) {
-        console.log('❌ Dragged element not found');
-        return items;
-      }
-
-      // Usuń przeciągnięty element ze struktury
-      const itemsWithoutDragged = removeDraggedItem(newItems);
-
-      // Dodaj element na koniec odpowiedniej grupy
-      const addToEndOfGroup = (arr: Warstwa[]): Warstwa[] => {
-        return arr.map(item => {
-          if (item.id === groupId) {
-            // Znaleźliśmy docelową grupę - dodaj element na koniec jej dzieci
-            const newChildren = item.dzieci ? [...item.dzieci] : [];
-            newChildren.push(draggedElement!);
-            return {
-              ...item,
-              dzieci: newChildren
-            };
-          }
-          
-          if (item.dzieci) {
-            return {
-              ...item,
-              dzieci: addToEndOfGroup(item.dzieci)
-            };
-          }
-          
-          return item;
-        });
-      };
-
-      return addToEndOfGroup(itemsWithoutDragged);
-    };
-
-    const newWarstwy = moveItemToEndOfGroup(warstwy);
-    console.log('🟡 Old warstwy (end drop):', warstwy);
-    console.log('🟠 New warstwy (end drop):', newWarstwy);
-    console.log('🔵 Are they different (end drop)?', JSON.stringify(warstwy) !== JSON.stringify(newWarstwy));
-    
-    if (JSON.stringify(warstwy) !== JSON.stringify(newWarstwy)) {
-      setWarstwy(newWarstwy);
-      console.log('✅ End drop: State updated successfully');
-    } else {
-      console.log('❌ End drop: No change in state');
+    // Sprawdź czy nie próbujemy wrzucić grupy do jej własnego dziecka
+    if (isDescendant(draggedItem, groupId)) {
+      console.log('❌ Cannot drop parent into its own child');
+      setDropTarget(null);
+      return;
     }
 
+    console.log(`🎯 Advanced drop at end of group: ${groupId}, item: ${draggedItem}`);
+
+    // Znajdź ścieżki
+    const draggedPath = findElementPath(warstwy, draggedItem);
+    const groupPath = findElementPath(warstwy, groupId);
+    
+    if (!draggedPath || !groupPath) {
+      console.log('❌ Could not find element paths');
+      setDropTarget(null);
+      return;
+    }
+
+    let newWarstwy = [...warstwy];
+    
+    // Usuń element z aktualnej pozycji
+    const { newItems: itemsAfterRemoval, removedElement } = removeElementAtPath(newWarstwy, draggedPath);
+    if (!removedElement) {
+      console.log('❌ Could not remove element');
+      setDropTarget(null);
+      return;
+    }
+    
+    newWarstwy = itemsAfterRemoval;
+    
+    // Znajdź nową ścieżkę do grupy (po usunięciu elementu)
+    const newGroupPath = findElementPath(newWarstwy, groupId);
+    if (!newGroupPath) {
+      console.log('❌ Could not find group after removal');
+      setDropTarget(null);
+      return;
+    }
+    
+    // Wstaw na koniec grupy
+    newWarstwy = insertElementAtPath(newWarstwy, removedElement, newGroupPath, 'inside');
+    
+    console.log('✅ Advanced end drop completed');
+    setWarstwy(newWarstwy);
+    
     setDraggedItem(null);
     setDropTarget(null);
     setDropPosition('before');
@@ -647,9 +827,58 @@ export default function HomePage() {
     const isDropTarget = dropTarget === warstwa.id;
     
     return (
-      <Box key={warstwa.id} sx={{ mb: -0.2, position: 'relative' }}>
-        {/* Drop indicator - precyzyjna linia pokazująca gdzie zostanie upuszczona warstwa */}
-        {isDropTarget && draggedItem && (
+      <Box key={warstwa.id} sx={{ 
+        mb: -0.2, 
+        position: 'relative',
+        ml: showMainLevelZone ? 1.5 : 0, // Delikatny margines tylko gdy w lewej strefie
+        transition: 'margin-left 0.2s ease'
+      }}>
+        {/* Drop indicator - różne wskazówki dla różnych operacji */}
+        {isDropTarget && draggedItem && dropPosition === 'inside' && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: level * 1.5 * 8,
+              right: 8,
+              bottom: 0,
+              border: '2px dashed #4caf50',
+              borderRadius: 1,
+              zIndex: 999,
+              pointerEvents: 'none',
+              bgcolor: 'rgba(76, 175, 80, 0.1)',
+              animation: 'groupDropIndicator 1.5s infinite',
+              '@keyframes groupDropIndicator': {
+                '0%': { 
+                  borderColor: '#4caf50',
+                  bgcolor: 'rgba(76, 175, 80, 0.1)',
+                  boxShadow: '0 0 8px rgba(76, 175, 80, 0.3)'
+                },
+                '50%': { 
+                  borderColor: '#66bb6a',
+                  bgcolor: 'rgba(76, 175, 80, 0.2)',
+                  boxShadow: '0 0 16px rgba(76, 175, 80, 0.6)'
+                },
+                '100%': { 
+                  borderColor: '#4caf50',
+                  bgcolor: 'rgba(76, 175, 80, 0.1)',
+                  boxShadow: '0 0 8px rgba(76, 175, 80, 0.3)'
+                }
+              },
+              '&::before': {
+                content: '"📁"',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                fontSize: '16px',
+                opacity: 0.7
+              }
+            }}
+          />
+        )}
+        
+        {isDropTarget && draggedItem && (dropPosition === 'before' || dropPosition === 'after') && (
           <Box
             sx={{
               position: 'absolute',
@@ -815,7 +1044,7 @@ export default function HomePage() {
           {getWarstwaIcon(warstwa.typ, warstwa.id)}
         </Box>
         
-        <Tooltip title={warstwa.nazwa} arrow placement="top">
+        <Tooltip title={warstwa.nazwa} arrow placement="right">
           <Typography
             sx={{
               fontSize: '13px',
@@ -1380,11 +1609,13 @@ export default function HomePage() {
         }}>
           <Box 
             className="layer-tree"
+            onDragOver={handleLayerTreeDragOver}
             sx={{ 
               flex: selectedLayer ? '1 1 0%' : 1,
               minHeight: 0,
               overflow: 'auto',
               p: 1,
+              position: 'relative', // Dla pozycjonowania strefy drop
             '&::-webkit-scrollbar': {
               width: '6px'
             },
@@ -1397,6 +1628,58 @@ export default function HomePage() {
             }
           }}
         >
+          {/* Strefa drop głównego poziomu - po lewej stronie tylko gdy przeciągamy w lewo */}
+          {showMainLevelZone && draggedItem && (
+            <Box
+              onDragOver={handleMainLevelDragOver}
+              onDrop={(e) => handleDrop(e, MAIN_LEVEL_DROP_ID)}
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: 25,
+                height: '100%',
+                bgcolor: dropTarget === MAIN_LEVEL_DROP_ID ? 'rgba(255, 152, 0, 0.2)' : 'rgba(255, 152, 0, 0.1)',
+                border: dropTarget === MAIN_LEVEL_DROP_ID ? '2px solid #ff9800' : '2px dashed rgba(255, 152, 0, 0.5)',
+                borderRadius: 1,
+                zIndex: 1001,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'copy',
+                transition: 'all 0.2s ease',
+                animation: dropTarget === MAIN_LEVEL_DROP_ID ? 'mainLevelActive 1s infinite' : 'none',
+                '@keyframes mainLevelActive': {
+                  '0%': { 
+                    bgcolor: 'rgba(255, 152, 0, 0.2)',
+                    borderColor: '#ff9800'
+                  },
+                  '50%': { 
+                    bgcolor: 'rgba(255, 152, 0, 0.3)',
+                    borderColor: '#ffb74d'
+                  },
+                  '100%': { 
+                    bgcolor: 'rgba(255, 152, 0, 0.2)',
+                    borderColor: '#ff9800'
+                  }
+                }
+              }}
+            >
+              <Typography sx={{ 
+                fontSize: '9px', 
+                color: '#ff9800', 
+                fontWeight: 600,
+                textAlign: 'center',
+                lineHeight: 1.1,
+                writingMode: 'vertical-rl',
+                textOrientation: 'mixed'
+              }}>
+                Poziom główny
+              </Typography>
+            </Box>
+          )}
+          
           {filteredWarstwy.map(warstwa => renderWarstwaItem(warstwa))}
         </Box>
 
@@ -1504,7 +1787,7 @@ export default function HomePage() {
                               color: 'white', 
                               fontStyle: 'italic'
                             }}>
-                              Brak grupy nadrzędnej
+                              {selectedLayer?.id ? (findParentGroup(warstwy, selectedLayer.id)?.nazwa || 'Grupa główna') : 'Grupa główna'}
                             </Typography>
                           </Box>
                         </Box>
