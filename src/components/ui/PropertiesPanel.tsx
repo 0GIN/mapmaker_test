@@ -5,7 +5,7 @@
  * - Wyświetlanie szczegółowych właściwości wybranej warstwy
  * - Edycję ustawień warstwy (przezroczystość, widoczność, style)
  * - Zarządzanie sekcjami rozwijalnymi (Style, Filtry, Metadane)
- * - Formularz edycji par        <Box sx={{ flex: 1, p: 1.5, overflow: 'auto' }}>metrów warstwy
+ * - Formularz edycji parametrów warstwy
  * - Akcje na warstwie (usuwanie, duplikowanie, eksport)
  * - Podgląd informacji o warstwie (typ, source, rozmiar)
  */
@@ -24,9 +24,9 @@ import { PropertiesPanelProps } from '@/types/layers';
 const PANEL_CONFIG = {
   // Główne wymiary panelu
   panel: {
-    height: '200px', // Wysokość całego panelu właściwości
+    height: '260px', // Wysokość całego panelu właściwości
     headerHeight: '40px', // Wysokość nagłówka panelu
-    contentPadding: '12px', // Padding dla zawartości (nieużywane)
+    contentPadding: '0px', // Padding dla zawartości (nieużywane)
   },
   
    // Czcionki i tekst
@@ -243,7 +243,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          p: 1.5,
+          p: 0.5,
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           bgcolor: PANEL_CONFIG.colors.headerBackground,
           minHeight: PANEL_CONFIG.panel.headerHeight

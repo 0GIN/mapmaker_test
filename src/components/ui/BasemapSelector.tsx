@@ -23,17 +23,17 @@ const BASEMAP_CONFIG = {
   // Ustawienia typografii
   typography: {
     title: {
-      fontSize: '11px',
+      fontSize: '9px',
       fontWeight: 500,
       marginBottom: 1
     },
     guide: {
-      fontSize: '9px',
+      fontSize: '8px',
       fontWeight: 500,
       marginTop: 1
     },
     menuItem: {
-      fontSize: '10px'
+      fontSize: '9px'
     }
   },
   
