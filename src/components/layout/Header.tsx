@@ -12,7 +12,7 @@
 'use client';
 
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import { Home as HomeIcon } from '@mui/material/icons-material';
+import { Home as HomeIcon } from '@mui/icons-material';
 
 interface HeaderProps {
   title?: string;

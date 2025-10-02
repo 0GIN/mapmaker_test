@@ -18,6 +18,118 @@ import {
 } from '@mui/icons-material';
 import { SearchBarProps } from '@/types/layers';
 
+// Obiekt konfiguracji dla wielkości i stylów paska wyszukiwania
+const SEARCHBAR_CONFIG = {
+  // Ustawienia kontenera
+  container: {
+    marginBottom: -1,
+    gap: 1
+  },
+  
+  // Ustawienia przycisków
+  button: {
+    size: 'small' as const,
+    padding: 0.75,
+    borderRadius: '4px'
+  },
+  
+  // Ustawienia pola wejściowego
+  input: {
+    padding: '8px 12px',
+    borderRadius: '20px',
+    fontSize: '13px',
+    fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'
+  },
+  
+  // Ustawienia menu rozwijanego
+  dropdown: {
+    marginTop: 0.5,
+    borderRadius: '8px',
+    minWidth: 140,
+    paddingVertical: 0.5,
+    itemPadding: {
+      horizontal: 2,
+      vertical: 0.3
+    },
+    fontSize: '13px',
+    fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'
+  },
+  
+  // Ustawienia ikon
+  icon: {
+    fontSize: '16px'
+  },
+  
+  // Kolory
+  colors: {
+    // Kolory przycisków
+    button: {
+      default: 'rgba(255, 255, 255, 0.7)',
+      active: '#4fc3f7',
+      hover: '#4fc3f7'
+    },
+    // Kolory tła
+    background: {
+      button: {
+        default: 'rgba(255, 255, 255, 0.08)',
+        active: 'rgba(79, 195, 247, 0.2)',
+        hover: 'rgba(79, 195, 247, 0.1)'
+      },
+      dropdown: 'rgba(60, 60, 60, 0.95)',
+      dropdownHover: 'rgba(255, 255, 255, 0.1)',
+      input: {
+        default: 'rgba(255, 255, 255, 0.08)',
+        focus: 'rgba(255, 255, 255, 0.12)'
+      }
+    },
+    // Kolory obramowań
+    border: {
+      input: {
+        default: 'rgba(79, 195, 247, 0.3)',
+        focus: '#4fc3f7'
+      },
+      dropdown: 'rgba(255, 255, 255, 0.2)'
+    },
+    // Kolory tekstu
+    text: {
+      default: '#ffffff',
+      active: '#4fc3f7',
+      placeholder: 'rgba(255, 255, 255, 0.5)'
+    },
+    // Kolory cieni
+    shadow: {
+      dropdown: 'rgba(0, 0, 0, 0.4)',
+      inputFocus: 'rgba(79, 195, 247, 0.2)'
+    }
+  }
+} as const;
+
+// Funkcja pomocnicza dla przycisków akcji
+const ActionButton: React.FC<{
+  title: string;
+  onClick: () => void;
+  icon: React.ReactElement;
+}> = ({ title, onClick, icon }) => (
+  <Tooltip title={title} arrow>
+    <IconButton
+      size={SEARCHBAR_CONFIG.button.size}
+      onClick={onClick}
+      sx={{
+        color: SEARCHBAR_CONFIG.colors.button.default,
+        bgcolor: SEARCHBAR_CONFIG.colors.background.button.default,
+        borderRadius: SEARCHBAR_CONFIG.button.borderRadius,
+        p: SEARCHBAR_CONFIG.button.padding,
+        '&:hover': { 
+          color: SEARCHBAR_CONFIG.colors.button.hover,
+          bgcolor: SEARCHBAR_CONFIG.colors.background.button.hover
+        }
+      }}
+    >
+      {React.cloneElement(icon, { sx: { fontSize: SEARCHBAR_CONFIG.icon.fontSize } })}
+    </IconButton>
+  </Tooltip>
+);
+
 export const SearchBar: React.FC<SearchBarProps> = ({
   searchFilter,
   onSearchChange,
@@ -43,27 +155,27 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   }, [filterMenuOpen, onFilterMenuToggle]);
 
   return (
-    <Box sx={{ mb: -1 }}>
+    <Box sx={{ mb: SEARCHBAR_CONFIG.container.marginBottom }}>
       {/* Kontener z przyciskami i polem wyszukiwania */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, position: 'relative' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: SEARCHBAR_CONFIG.container.gap, position: 'relative' }}>
         {/* Przycisk po lewej stronie */}
         <Box sx={{ position: 'relative' }}>
           <Tooltip title="Widoczność warstw" arrow>
             <IconButton
-              size="small"
+              size={SEARCHBAR_CONFIG.button.size}
               onClick={onFilterMenuToggle}
               sx={{
-                color: filterMenuOpen ? '#4fc3f7' : 'rgba(255, 255, 255, 0.7)',
-                bgcolor: filterMenuOpen ? 'rgba(79, 195, 247, 0.2)' : 'rgba(255, 255, 255, 0.08)',
-                borderRadius: '4px',
-                p: 0.75,
+                color: filterMenuOpen ? SEARCHBAR_CONFIG.colors.button.active : SEARCHBAR_CONFIG.colors.button.default,
+                bgcolor: filterMenuOpen ? SEARCHBAR_CONFIG.colors.background.button.active : SEARCHBAR_CONFIG.colors.background.button.default,
+                borderRadius: SEARCHBAR_CONFIG.button.borderRadius,
+                p: SEARCHBAR_CONFIG.button.padding,
                 '&:hover': { 
-                  color: '#4fc3f7',
-                  bgcolor: 'rgba(79, 195, 247, 0.1)'
+                  color: SEARCHBAR_CONFIG.colors.button.hover,
+                  bgcolor: SEARCHBAR_CONFIG.colors.background.button.hover
                 }
               }}
             >
-              <FilterListIcon sx={{ fontSize: '16px' }} />
+              <FilterListIcon sx={{ fontSize: SEARCHBAR_CONFIG.icon.fontSize }} />
             </IconButton>
           </Tooltip>
           
@@ -74,15 +186,15 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                 position: 'absolute',
                 top: '100%',
                 left: 0,
-                mt: 0.5,
-                bgcolor: 'rgba(60, 60, 60, 0.95)',
+                mt: SEARCHBAR_CONFIG.dropdown.marginTop,
+                bgcolor: SEARCHBAR_CONFIG.colors.background.dropdown,
                 backdropFilter: 'blur(8px)',
-                borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
+                borderRadius: SEARCHBAR_CONFIG.dropdown.borderRadius,
+                border: `1px solid ${SEARCHBAR_CONFIG.colors.border.dropdown}`,
+                boxShadow: `0 4px 20px ${SEARCHBAR_CONFIG.colors.shadow.dropdown}`,
                 zIndex: 1000,
-                minWidth: 140,
-                py: 0.5,
+                minWidth: SEARCHBAR_CONFIG.dropdown.minWidth,
+                py: SEARCHBAR_CONFIG.dropdown.paddingVertical,
               }}
             >
               {[
@@ -98,18 +210,18 @@ export const SearchBar: React.FC<SearchBarProps> = ({
                     onFilterMenuToggle();
                   }}
                   sx={{
-                    px: 2,
-                    py: 0.3,
+                    px: SEARCHBAR_CONFIG.dropdown.itemPadding.horizontal,
+                    py: SEARCHBAR_CONFIG.dropdown.itemPadding.vertical,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    color: selectedFilter === option.key ? '#4fc3f7' : '#ffffff',
-                    fontSize: '13px',
+                    color: selectedFilter === option.key ? SEARCHBAR_CONFIG.colors.text.active : SEARCHBAR_CONFIG.colors.text.default,
+                    fontSize: SEARCHBAR_CONFIG.dropdown.fontSize,
                     fontWeight: selectedFilter === option.key ? 500 : 400,
-                    fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+                    fontFamily: SEARCHBAR_CONFIG.dropdown.fontFamily,
                     '&:hover': {
-                      bgcolor: 'rgba(255, 255, 255, 0.1)',
-                      color: '#4fc3f7'
+                      bgcolor: SEARCHBAR_CONFIG.colors.background.dropdownHover,
+                      color: SEARCHBAR_CONFIG.colors.text.active
                     }
                   }}
                 >
@@ -129,63 +241,37 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           onChange={(e: any) => onSearchChange(e.target.value)}
           sx={{
             flex: 1,
-            p: '8px 12px',
-            borderRadius: '20px',
-            border: '1px solid rgba(79, 195, 247, 0.3)',
-            bgcolor: 'rgba(255, 255, 255, 0.08)',
-            color: '#ffffff',
-            fontSize: '13px',
-            fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+            p: SEARCHBAR_CONFIG.input.padding,
+            borderRadius: SEARCHBAR_CONFIG.input.borderRadius,
+            border: `1px solid ${SEARCHBAR_CONFIG.colors.border.input.default}`,
+            bgcolor: SEARCHBAR_CONFIG.colors.background.input.default,
+            color: SEARCHBAR_CONFIG.colors.text.default,
+            fontSize: SEARCHBAR_CONFIG.input.fontSize,
+            fontFamily: SEARCHBAR_CONFIG.input.fontFamily,
             '&::placeholder': {
-              color: 'rgba(255, 255, 255, 0.5)'
+              color: SEARCHBAR_CONFIG.colors.text.placeholder
             },
             '&:focus': {
               outline: 'none',
-              borderColor: '#4fc3f7',
-              bgcolor: 'rgba(255, 255, 255, 0.12)',
-              boxShadow: '0 0 0 2px rgba(79, 195, 247, 0.2)'
+              borderColor: SEARCHBAR_CONFIG.colors.border.input.focus,
+              bgcolor: SEARCHBAR_CONFIG.colors.background.input.focus,
+              boxShadow: `0 0 0 2px ${SEARCHBAR_CONFIG.colors.shadow.inputFocus}`
             }
           }}
         />
 
         {/* Przyciski po prawej stronie */}
-        <Tooltip title="Rozwiń wszystkie" arrow>
-          <IconButton
-            size="small"
-            onClick={onExpandAll}
-            sx={{
-              color: 'rgba(255, 255, 255, 0.7)',
-              bgcolor: 'rgba(255, 255, 255, 0.08)',
-              borderRadius: '4px',
-              p: 0.75,
-              '&:hover': { 
-                color: '#4fc3f7',
-                bgcolor: 'rgba(79, 195, 247, 0.1)'
-              }
-            }}
-          >
-            <ExpandMoreIcon sx={{ fontSize: '16px' }} />
-          </IconButton>
-        </Tooltip>
+        <ActionButton 
+          title="Rozwiń wszystkie" 
+          onClick={onExpandAll}
+          icon={<ExpandMoreIcon />}
+        />
 
-        <Tooltip title="Zwiń wszystkie" arrow>
-          <IconButton
-            size="small"
-            onClick={onCollapseAll}
-            sx={{
-              color: 'rgba(255, 255, 255, 0.7)',
-              bgcolor: 'rgba(255, 255, 255, 0.08)',
-              borderRadius: '4px',
-              p: 0.75,
-              '&:hover': { 
-                color: '#4fc3f7',
-                bgcolor: 'rgba(79, 195, 247, 0.1)'
-              }
-            }}
-          >
-            <ExpandLessIcon sx={{ fontSize: '16px' }} />
-          </IconButton>
-        </Tooltip>
+        <ActionButton 
+          title="Zwiń wszystkie" 
+          onClick={onCollapseAll}
+          icon={<ExpandLessIcon />}
+        />
       </Box>
     </Box>
   );

@@ -14,15 +14,71 @@ import { Box, IconButton, Tooltip } from '@mui/material';
 import {
   Public as PublicIcon,
   Map as MapIcon,
-  AddBox as AddBoxIcon,
-  ArrowUpward as ArrowUpwardIcon,
-  Add as AddIcon,
-  Clear as ClearIcon,
-  Chat as ChatIcon,
-  Star as StarIcon,
-  Edit as EditIcon
+  AddToPhotos as AddToPhotosIcon,
+  Publish as PublishIcon,
+  CreateNewFolder as AddIcon,
+  DeleteForever as ClearIcon,
+  Forum as ChatIcon,
+  FolderSpecial as StarIcon,
+  EditDocument as EditIcon
 } from '@mui/icons-material';
 import { ToolbarProps } from '@/types/layers';
+
+// Obiekt konfiguracji dla wielkości i stylów paska narzędzi
+const TOOLBAR_CONFIG = {
+  // Ustawienia kontenera
+  container: {
+    gap: 0.5,
+    marginBottom: 0.1,
+    paddingHorizontal: 1
+  },
+  
+  // Ustawienia przycisków
+  button: {
+    padding: 0.5,
+    minWidth: 'auto',
+    size: 'small' as const
+  },
+  
+  // Ustawienia ikon
+  icon: {
+    fontSize: '18px'
+  },
+  
+  // Kolory
+  colors: {
+    default: 'rgba(255, 255, 255, 0.8)',
+    hover: '#4fc3f7',
+    danger: '#ff6b6b'
+  }
+} as const;
+
+// Funkcja pomocnicza dla spójnego stylowania przycisków paska narzędzi
+const ToolbarButton: React.FC<{
+  title: string;
+  onClick: () => void;
+  icon: React.ReactElement;
+  isDanger?: boolean;
+  className?: string;
+}> = ({ title, onClick, icon, isDanger = false, className }) => (
+  <Tooltip title={title} arrow>
+    <IconButton
+      size={TOOLBAR_CONFIG.button.size}
+      onClick={onClick}
+      className={className}
+      sx={{
+        color: TOOLBAR_CONFIG.colors.default,
+        p: TOOLBAR_CONFIG.button.padding,
+        minWidth: TOOLBAR_CONFIG.button.minWidth,
+        '&:hover': { 
+          color: isDanger ? TOOLBAR_CONFIG.colors.danger : TOOLBAR_CONFIG.colors.hover 
+        }
+      }}
+    >
+      {React.cloneElement(icon, { sx: { fontSize: TOOLBAR_CONFIG.icon.fontSize } })}
+    </IconButton>
+  </Tooltip>
+);
 
 export const Toolbar: React.FC<ToolbarProps> = ({
   onAddInspireDataset,
@@ -38,147 +94,67 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <Box sx={{ 
       display: 'flex', 
-      gap: 0.5, 
-      mb: 0.1,
+      gap: TOOLBAR_CONFIG.container.gap, 
+      mb: TOOLBAR_CONFIG.container.marginBottom,
       justifyContent: 'space-between',
       flexWrap: 'wrap',
-      px: 1
+      px: TOOLBAR_CONFIG.container.paddingHorizontal
     }}>
-      <Tooltip title="Dodaj zbiór danych - INSPIRE" arrow>
-        <IconButton
-          size="small"
-          onClick={onAddInspireDataset}
-          className="toolbar-icon"
-          sx={{
-            color: 'rgba(255, 255, 255, 0.8)',
-            p: 0.5,
-            minWidth: 'auto',
-            '&:hover': { color: '#4fc3f7' }
-          }}
-        >
-          <PublicIcon sx={{ fontSize: '18px' }} />
-        </IconButton>
-      </Tooltip>
+      <ToolbarButton 
+        title="Dodaj zbiór danych - INSPIRE" 
+        onClick={onAddInspireDataset}
+        icon={<PublicIcon />}
+        className="toolbar-icon"
+      />
       
-      <Tooltip title="Dodaj zbiór danych - PRAWO KRAJOWE" arrow>
-        <IconButton
-          size="small"
-          onClick={onAddNationalLaw}
-          sx={{
-            color: 'rgba(255, 255, 255, 0.8)',
-            p: 0.5,
-            minWidth: 'auto',
-            '&:hover': { color: '#4fc3f7' }
-          }}
-        >
-          <MapIcon sx={{ fontSize: '18px' }} />
-        </IconButton>
-      </Tooltip>
+      <ToolbarButton 
+        title="Dodaj zbiór danych - PRAWO KRAJOWE" 
+        onClick={onAddNationalLaw}
+        icon={<MapIcon />}
+      />
       
-      <Tooltip title="Dodaj warstwę" arrow>
-        <IconButton
-          size="small"
-          onClick={onAddLayer}
-          sx={{
-            color: 'rgba(255, 255, 255, 0.8)',
-            p: 0.5,
-            minWidth: 'auto',
-            '&:hover': { color: '#4fc3f7' }
-          }}
-        >
-          <AddBoxIcon sx={{ fontSize: '18px' }} />
-        </IconButton>
-      </Tooltip>
+      <ToolbarButton 
+        title="Dodaj warstwę" 
+        onClick={onAddLayer}
+        icon={<AddToPhotosIcon />}
+      />
       
-      <Tooltip title="Importuj warstwę" arrow>
-        <IconButton
-          size="small"
-          onClick={onImportLayer}
-          sx={{
-            color: 'rgba(255, 255, 255, 0.8)',
-            p: 0.5,
-            minWidth: 'auto',
-            '&:hover': { color: '#4fc3f7' }
-          }}
-        >
-          <ArrowUpwardIcon sx={{ fontSize: '18px' }} />
-        </IconButton>
-      </Tooltip>
+      <ToolbarButton 
+        title="Importuj warstwę" 
+        onClick={onImportLayer}
+        icon={<PublishIcon />}
+      />
       
-      <Tooltip title="Dodaj grupę" arrow>
-        <IconButton
-          size="small"
-          onClick={onAddGroup}
-          sx={{
-            color: 'rgba(255, 255, 255, 0.8)',
-            p: 0.5,
-            minWidth: 'auto',
-            '&:hover': { color: '#4fc3f7' }
-          }}
-        >
-          <AddIcon sx={{ fontSize: '18px' }} />
-        </IconButton>
-      </Tooltip>
+      <ToolbarButton 
+        title="Dodaj grupę" 
+        onClick={onAddGroup}
+        icon={<AddIcon />}
+      />
 
-      <Tooltip title="Usuń grupę lub warstwę" arrow>
-        <IconButton
-          size="small"
-          onClick={onRemoveLayer}
-          sx={{
-            color: 'rgba(255, 255, 255, 0.8)',
-            p: 0.5,
-            minWidth: 'auto',
-            '&:hover': { color: '#ff6b6b' }
-          }}
-        >
-          <ClearIcon sx={{ fontSize: '18px' }} />
-        </IconButton>
-      </Tooltip>
+      <ToolbarButton 
+        title="Usuń grupę lub warstwę" 
+        onClick={onRemoveLayer}
+        icon={<ClearIcon />}
+        isDanger={true}
+      />
       
-      <Tooltip title="Utwórz konsultacje społeczne" arrow>
-        <IconButton
-          size="small"
-          onClick={onCreateConsultation}
-          sx={{
-            color: 'rgba(255, 255, 255, 0.8)',
-            p: 0.5,
-            minWidth: 'auto',
-            '&:hover': { color: '#4fc3f7' }
-          }}
-        >
-          <ChatIcon sx={{ fontSize: '18px' }} />
-        </IconButton>
-      </Tooltip>
+      <ToolbarButton 
+        title="Utwórz konsultacje społeczne" 
+        onClick={onCreateConsultation}
+        icon={<ChatIcon />}
+      />
 
-      <Tooltip title="Menedżer warstw" arrow>
-        <IconButton
-          size="small"
-          onClick={onLayerManager}
-          sx={{
-            color: 'rgba(255, 255, 255, 0.8)',
-            p: 0.5,
-            minWidth: 'auto',
-            '&:hover': { color: '#4fc3f7' }
-          }}
-        >
-          <StarIcon sx={{ fontSize: '18px' }} />
-        </IconButton>
-      </Tooltip>
+      <ToolbarButton 
+        title="Menedżer warstw" 
+        onClick={onLayerManager}
+        icon={<StarIcon />}
+      />
 
-      <Tooltip title="Konfiguracja wyrysu i wypisu" arrow>
-        <IconButton
-          size="small"
-          onClick={onPrintConfig}
-          sx={{
-            color: 'rgba(255, 255, 255, 0.8)',
-            p: 0.5,
-            minWidth: 'auto',
-            '&:hover': { color: '#4fc3f7' }
-          }}
-        >
-          <EditIcon sx={{ fontSize: '18px' }} />
-        </IconButton>
-      </Tooltip>
+      <ToolbarButton 
+        title="Konfiguracja wyrysu i wypisu" 
+        onClick={onPrintConfig}
+        icon={<EditIcon />}
+      />
     </Box>
   );
 };

@@ -22,7 +22,7 @@ interface ErrorStateProps {
 }
 
 // ===================================================================
-// ERROR STATE COMPONENT
+// KOMPONENT STANU BŁĘDU
 // ===================================================================
 // Wyświetla sformatowany komunikat błędu z ikoną i opcjonalnym przyciskiem retry
 export const ErrorState: React.FC<ErrorStateProps> = ({ error, onRetry }) => {

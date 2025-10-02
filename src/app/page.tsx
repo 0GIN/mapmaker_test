@@ -24,7 +24,7 @@ import {
 import { sidebarStyles } from '@/config/theme';
 
 export default function HomePage() {
-  // UI State
+  // Stan UI
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState<number>(sidebarStyles.width);
   const [isResizing, setIsResizing] = useState(false);

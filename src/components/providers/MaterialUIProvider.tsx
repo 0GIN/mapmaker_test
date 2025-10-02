@@ -20,7 +20,7 @@ import CssBaseline from '@mui/material/CssBaseline';  // Reset stylów CSS
 import { theme } from '@/config/theme';               // Nasz customowy temat
 
 // ===================================================================
-// MATERIALUI PROVIDER COMPONENT
+// KOMPONENT PROVIDERA MATERIALUI
 // ===================================================================
 // Główny provider który:
 // 1. Dostarcza customowy temat do całej aplikacji

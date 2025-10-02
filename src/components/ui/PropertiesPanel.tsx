@@ -5,7 +5,7 @@
  * - Wyświetlanie szczegółowych właściwości wybranej warstwy
  * - Edycję ustawień warstwy (przezroczystość, widoczność, style)
  * - Zarządzanie sekcjami rozwijalnymi (Style, Filtry, Metadane)
- * - Formularz edycji parametrów warstwy
+ * - Formularz edycji par        <Box sx={{ flex: 1, p: 1.5, overflow: 'auto' }}>metrów warstwy
  * - Akcje na warstwie (usuwanie, duplikowanie, eksport)
  * - Podgląd informacji o warstwie (typ, source, rozmiar)
  */
@@ -18,6 +18,57 @@ import {
   Lock as LockIcon
 } from '@mui/icons-material';
 import { PropertiesPanelProps } from '@/types/layers';
+
+// ===== KONFIGURACJA WIELKOŚCI I STYLÓW =====
+
+const PANEL_CONFIG = {
+  // Główne wymiary panelu
+  panel: {
+    height: '200px', // Wysokość całego panelu właściwości
+    headerHeight: '40px', // Wysokość nagłówka panelu
+    contentPadding: '12px', // Padding dla zawartości (nieużywane)
+  },
+  
+   // Czcionki i tekst
+  typography: {
+    headerFontSize: '15px', // Rozmiar czcionki w nagłówku panelu
+    sectionTitleFontSize: '15px', // Rozmiar tytułów sekcji
+    labelFontSize: '11px', // Rozmiar etykiet pól
+    valueFontSize: '11px', // Rozmiar wartości w polach
+    buttonFontSize: '10px', // Rozmiar czcionki w przyciskach
+    iconSize: '14px', // Rozmiar ikon w sekcjach
+    closeIconSize: '14px', // Rozmiar ikony zamknięcia
+  },
+  
+  // Elementy interfejsu (jednostki MUI: liczby = * 8px, stringi = dokładne wartości)
+  elements: {
+    sectionMarginBottom: 0.8, // Odstęp między sekcjami (0.8 * 8px = 6.4px)
+    sectionContentMarginLeft: 2, // Wcięcie zawartości sekcji (2 * 8px = 16px)
+    sectionContentMarginTop: 1, // Odstęp góra zawartości sekcji (1 * 8px = 8px)
+    fieldMarginBottom: 0.8, // Odstęp między polami (0.8 * 8px = 6.4px)
+    checkboxSize: '16px', // Rozmiar checkboxów (jednostka dokładna)
+    buttonPaddingX: 2, // Padding poziomy przycisków (2 * 8px = 16px)
+    buttonPaddingY: 0.3, // Padding pionowy przycisków (0.3 * 8px = 2.4px)
+    buttonMinWidth: '60px', // Minimalna szerokość przycisków
+    sliderHeight: '6px', // Wysokość sliderów
+    sliderThumbSize: '14px', // Rozmiar suwaka slidera
+  },
+  
+    // Kolory (dla łatwej zmiany motywu)
+  colors: {
+    panelBackground: 'rgba(50, 50, 50, 0.95)',
+    headerBackground: 'rgba(40, 40, 40, 0.9)',
+    buttonBackground: 'rgba(70, 80, 90, 0.8)',
+    buttonBorder: 'rgba(100, 110, 120, 0.6)',
+    buttonHoverBackground: 'rgba(79, 195, 247, 0.2)',
+    buttonHoverBorder: 'rgba(79, 195, 247, 0.4)',
+    accent: '#4fc3f7',
+    text: 'white',
+    textSecondary: 'rgba(255, 255, 255, 0.7)',
+    textMuted: 'rgba(255, 255, 255, 0.6)',
+  }
+  
+  };
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   selectedLayer,
@@ -32,20 +83,48 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   onLayerLabeling,
   findParentGroup
 }) => {
+  // Pomocnicze funkcje do renderowania elementów z konfiguracją
+  const renderLabel = (text: string) => (
+    <Typography sx={{ 
+      fontSize: PANEL_CONFIG.typography.labelFontSize, 
+      color: PANEL_CONFIG.colors.text, 
+      mb: 0.5 
+    }}>
+      {text}
+    </Typography>
+  );
+
+  const renderValue = (text: string, italic: boolean = true) => (
+    <Typography sx={{ 
+      fontSize: PANEL_CONFIG.typography.valueFontSize, 
+      color: PANEL_CONFIG.colors.text, 
+      fontStyle: italic ? 'italic' : 'normal',
+      lineHeight: 1.3
+    }}>
+      {text}
+    </Typography>
+  );
+
+  const renderFieldBox = (children: React.ReactNode, marginBottom: boolean = true) => (
+    <Box sx={{ mb: marginBottom ? PANEL_CONFIG.elements.fieldMarginBottom : 0 }}>
+      {children}
+    </Box>
+  );
+
   const renderCheckbox = (checkboxName: string, isChecked: boolean) => (
     <Box
       sx={{
-        width: 16,
-        height: 16,
+        width: PANEL_CONFIG.elements.checkboxSize,
+        height: PANEL_CONFIG.elements.checkboxSize,
         border: '1px solid rgba(255, 255, 255, 0.5)',
         borderRadius: '2px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        bgcolor: isChecked ? 'rgba(79, 195, 247, 0.3)' : 'transparent',
+        bgcolor: isChecked ? `${PANEL_CONFIG.colors.accent}30` : 'transparent',
         '&:hover': {
-          borderColor: '#4fc3f7'
+          borderColor: PANEL_CONFIG.colors.accent
         }
       }}
       onClick={() => onToggleCheckbox(checkboxName)}
@@ -66,21 +145,21 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const renderActionButton = (label: string, onClick: () => void, width: string = 'fit-content') => (
     <Box
       sx={{
-        bgcolor: 'rgba(70, 80, 90, 0.8)',
-        border: '1px solid rgba(100, 110, 120, 0.6)',
+        bgcolor: PANEL_CONFIG.colors.buttonBackground,
+        border: `1px solid ${PANEL_CONFIG.colors.buttonBorder}`,
         borderRadius: '4px',
         px: width === 'fit-content' ? 2 : 1.5,
         py: 0.3,
         cursor: 'pointer',
-        fontSize: '10px',
-        color: 'white',
+        fontSize: PANEL_CONFIG.typography.buttonFontSize,
+        color: PANEL_CONFIG.colors.text,
         fontWeight: 500,
         textAlign: 'center',
         width: width,
-        minWidth: width === 'fit-content' ? '60px' : width,
+        minWidth: width === 'fit-content' ? PANEL_CONFIG.elements.buttonMinWidth : width,
         '&:hover': {
-          bgcolor: 'rgba(79, 195, 247, 0.2)',
-          borderColor: 'rgba(79, 195, 247, 0.4)'
+          bgcolor: PANEL_CONFIG.colors.buttonHoverBackground,
+          borderColor: PANEL_CONFIG.colors.buttonHoverBorder
         }
       }}
       onClick={onClick}
@@ -95,7 +174,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     children: React.ReactNode, 
     hasLock: boolean = false
   ) => (
-    <Box sx={{ mb: 0.8 }}>
+    <Box sx={{ mb: PANEL_CONFIG.elements.sectionMarginBottom }}>
       <Box
         onClick={() => onToggleSection(sectionId)}
         sx={{
@@ -103,28 +182,43 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           alignItems: 'center',
           cursor: 'pointer',
           mb: 1,
-          '&:hover': { color: '#4fc3f7' }
+          '&:hover': { color: PANEL_CONFIG.colors.accent }
         }}
       >
         {expandedSections[sectionId] ? 
-          <ExpandMoreIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} /> :
-          <ChevronRightIcon sx={{ fontSize: '14px', color: 'white', mr: 0.5 }} />
+          <ExpandMoreIcon sx={{ 
+            fontSize: PANEL_CONFIG.typography.iconSize, 
+            color: PANEL_CONFIG.colors.text, 
+            mr: 0.5 
+          }} /> :
+          <ChevronRightIcon sx={{ 
+            fontSize: PANEL_CONFIG.typography.iconSize, 
+            color: PANEL_CONFIG.colors.text, 
+            mr: 0.5 
+          }} />
         }
-        <Typography sx={{ color: 'white', fontSize: '11px', fontWeight: 500 }}>
+        <Typography sx={{ 
+          color: PANEL_CONFIG.colors.text, 
+          fontSize: PANEL_CONFIG.typography.sectionTitleFontSize, 
+          fontWeight: 500 
+        }}>
           {title}
         </Typography>
         {hasLock && (
           <LockIcon sx={{ 
             ml: 1,
             fontSize: '12px',
-            color: 'rgba(255, 255, 255, 0.6)',
+            color: PANEL_CONFIG.colors.textMuted,
             cursor: 'help'
           }} />
         )}
       </Box>
       
       {expandedSections[sectionId] && (
-        <Box sx={{ ml: 2, mt: 1 }}>
+        <Box sx={{ 
+          ml: PANEL_CONFIG.elements.sectionContentMarginLeft, 
+          mt: PANEL_CONFIG.elements.sectionContentMarginTop
+        }}>
           {children}
         </Box>
       )}
@@ -135,11 +229,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     <Box
       sx={{
         flexShrink: 0,
-        bgcolor: 'rgba(50, 50, 50, 0.95)',
+        bgcolor: PANEL_CONFIG.colors.panelBackground,
         borderTop: '1px solid rgba(255, 255, 255, 0.2)',
         display: 'flex',
         flexDirection: 'column',
-        height: '200px',
+        height: PANEL_CONFIG.panel.height,
         overflow: 'hidden'
       }}
     >
@@ -151,13 +245,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           justifyContent: 'space-between',
           p: 1.5,
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          bgcolor: 'rgba(40, 40, 40, 0.9)'
+          bgcolor: PANEL_CONFIG.colors.headerBackground,
+          minHeight: PANEL_CONFIG.panel.headerHeight
         }}
       >
         <Typography
           sx={{
-            color: 'white',
-            fontSize: '15px',
+            color: PANEL_CONFIG.colors.text,
+            fontSize: PANEL_CONFIG.typography.headerFontSize,
             fontWeight: 500,
             flex: 1
           }}
@@ -172,18 +267,18 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             size="small"
             onClick={onClosePanel}
             sx={{
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: PANEL_CONFIG.colors.textSecondary,
               p: 0.5,
               '&:hover': { color: '#ff6b6b' }
             }}
           >
-            <CloseIcon sx={{ fontSize: '14px' }} />
+            <CloseIcon sx={{ fontSize: PANEL_CONFIG.typography.closeIconSize }} />
           </IconButton>
         )}
       </Box>
 
       {/* Zawartość panelu właściwości */}
-      <Box sx={{ flex: 1, p: 1.5, overflow: 'auto' }}>
+      <Box sx={{ flex: 1, p: `${PANEL_CONFIG.panel.contentPadding}px`, overflow: 'auto' }}>
         {selectedLayer ? (
           <>
             {/* WŁAŚCIWOŚCI GRUPY */}
@@ -191,32 +286,20 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               <>
                 {renderSection('grupa-informacje-ogolne', 'Informacje ogólne', (
                   <>
-                    <Box sx={{ mb: 0.8 }}>
-                      <Typography sx={{ fontSize: '11px', color: 'white', mb: 0.5 }}>
-                        Nazwa
-                      </Typography>
-                      <Typography sx={{ 
-                        fontSize: '11px', 
-                        color: 'white', 
-                        fontStyle: 'italic',
-                        lineHeight: 1.3
-                      }}>
-                        MIEJSCOWE PLANY ZAGOSPODAROWANIA PRZESTRZENNEGO
-                      </Typography>
-                    </Box>
+                    {renderFieldBox(
+                      <>
+                        {renderLabel('Nazwa')}
+                        {renderValue('MIEJSCOWE PLANY ZAGOSPODAROWANIA PRZESTRZENNEGO')}
+                      </>
+                    )}
                     
-                    <Box>
-                      <Typography sx={{ fontSize: '11px', color: 'white', mb: 0.5 }}>
-                        Grupa
-                      </Typography>
-                      <Typography sx={{ 
-                        fontSize: '11px', 
-                        color: 'white', 
-                        fontStyle: 'italic'
-                      }}>
-                        {selectedLayer?.id ? (findParentGroup(warstwy, selectedLayer.id)?.nazwa || 'Grupa główna') : 'Grupa główna'}
-                      </Typography>
-                    </Box>
+                    {renderFieldBox(
+                      <>
+                        {renderLabel('Grupa')}
+                        {renderValue(selectedLayer?.id ? (findParentGroup(warstwy, selectedLayer.id)?.nazwa || 'Grupa główna') : 'Grupa główna')}
+                      </>,
+                      false
+                    )}
                   </>
                 ))}
 

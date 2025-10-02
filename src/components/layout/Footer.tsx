@@ -12,7 +12,7 @@
 'use client';
 
 import { Box, Container, Typography, Link, Stack } from '@mui/material';
-import { GitHub, LinkedIn, Email } from '@mui/material/icons-material';
+import { GitHub, LinkedIn, Email } from '@mui/icons-material';
 
 export default function Footer() {
   return (

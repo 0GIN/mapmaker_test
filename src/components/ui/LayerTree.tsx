@@ -14,11 +14,139 @@ import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import {
   Folder as FolderIcon,
   Layers as LayersIcon,
-  ZoomInMap as ZoomInMapIcon,
-  CalendarToday as CalendarTodayIcon
+  MyLocation as PrzyblizDoWarstwyIcon,
+  TableView as CalendarTodayIcon
 } from '@mui/icons-material';
 import { LayerTreeProps, Warstwa } from '@/types/layers';
 import { layerIconColors, dropZoneColors } from '@/config/theme';
+
+// ===== KONFIGURACJA WIELKOŚCI I STYLÓW =====
+// Obiekt konfiguracji dla wielkości i stylów drzewa warstw
+const TREE_CONFIG = {
+  // Ustawienia kontenera drzewa
+  container: {
+    padding: 1,
+    scrollbar: {
+      width: 8,
+      borderRadius: 4
+    }
+  },
+  
+  // Odstępy i wcięcia elementów
+  item: {
+    padding: {
+      vertical: 0.2,
+      horizontal: 1
+    },
+    indentation: 1.5, // mnożone przez poziom
+    borderRadius: 4,
+    margins: {
+      children: 1
+    },
+    // Stany wizualne przeciągania i upuszczania
+    dragStates: {
+      opacity: {
+        dragged: 0.6,
+        normal: 1
+      },
+      transform: {
+        dragged: 'scale(1.02) rotate(2deg)',
+        hover: 'translateX(4px)',
+        normal: 'none'
+      },
+      boxShadow: {
+        dragged: '0 8px 16px rgba(0,0,0,0.3)',
+        dropTarget: '0 0 0 2px rgba(76, 175, 80, 0.4)',
+        normal: 'none'
+      }
+    }
+  },
+  
+  // Ustawienia typografii
+  typography: {
+    fontSize: '13px',
+    fontWeight: {
+      group: 500,
+      layer: 400
+    },
+    letterSpacing: '0.2px',
+    fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'
+  },
+  
+  // Elementy interaktywne
+  elements: {
+    expandButton: {
+      size: 16,
+      marginRight: 0.5
+    },
+    checkbox: {
+      size: 16,
+      marginRight: 1
+    },
+    iconContainer: {
+      marginRight: 1,
+      minWidth: 20
+    },
+    actionButton: {
+      padding: 0.25,
+      gap: 0.5
+    },
+    dropZone: {
+      height: {
+        active: 12,
+        inactive: 4
+      },
+      indicator: {
+        height: 3,
+        borderRadius: 1.5,
+        bottom: 2
+      }
+    }
+  },
+  
+  // Kolory i stany wizualne
+  colors: {
+    background: {
+      dragged: 'rgba(79, 195, 247, 0.3)',
+      dropTarget: 'rgba(76, 175, 80, 0.2)',
+      selected: 'rgba(255, 152, 0, 0.2)',
+      hover: {
+        normal: 'rgba(79, 195, 247, 0.15)',
+        dragged: 'rgba(79, 195, 247, 0.4)',
+        dropTarget: 'rgba(76, 175, 80, 0.3)',
+        dropZone: 'rgba(79, 195, 247, 0.05)'
+      },
+      transparent: 'transparent'
+    },
+    border: {
+      level: 'rgba(255,255,255,0.1)',
+      levelHover: '#4fc3f7',
+      dragged: '#4fc3f7',
+      dropTarget: '#4caf50',
+      selected: '#ff9800'
+    },
+    text: {
+      visible: '#ffffff',
+      hidden: 'rgba(255, 255, 255, 0.5)',
+      icon: 'rgba(255, 255, 255, 0.7)',
+      iconHover: '#4fc3f7'
+    },
+    indicators: {
+      drag: '#1976d2',
+      drop: '#4fc3f7',
+      dropGlow: 'rgba(79, 195, 247, 0.6)',
+      arrow: 'rgba(255,255,255,0.8)'
+    }
+  },
+  
+  // Konfiguracje ikon
+  icon: {
+    size: {
+      small: 'small',
+      medium: 'medium'
+    }
+  }
+} as const;
 
 const MAIN_LEVEL_DROP_ID = '__main_level__';
 
@@ -42,12 +170,13 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
 }) => {
   const { draggedItem, dropTarget, dropPosition, showMainLevelZone } = dragDropState;
 
-  const getWarstwaIcon = (typ: 'grupa' | 'wektor' | 'raster', id?: string) => {
+  const getWarstwaIcon = (typ: 'grupa' | 'wektor' | 'raster' | 'wms', id?: string) => {
+    const iconSize = TREE_CONFIG.icon.size.small;
     switch (typ) {
-      case 'grupa': return <FolderIcon sx={{ color: layerIconColors.grupa }} />; // Niebieska ikona folderu dla katalogów
-      case 'wektor': return <LayersIcon sx={{ color: layerIconColors.wektor }} />; // Zielona ikona dla warstw wektorowych
-      case 'raster': return <LayersIcon sx={{ color: layerIconColors.raster }} />; // Zielona ikona dla warstw rastrowych
-      default: return <LayersIcon sx={{ color: layerIconColors.default }} />; // Domyślnie zielona ikona warstwy
+      case 'grupa': return <FolderIcon sx={{ color: layerIconColors.grupa, fontSize: iconSize }} />;
+      case 'wektor': return <LayersIcon sx={{ color: layerIconColors.wektor, fontSize: iconSize }} />;
+      case 'raster': return <LayersIcon sx={{ color: layerIconColors.raster, fontSize: iconSize }} />;
+      default: return <LayersIcon sx={{ color: layerIconColors.default, fontSize: iconSize }} />;
     }
   };
 
@@ -193,34 +322,34 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
           sx={{
             display: 'flex',
             alignItems: 'center',
-            py: 0.2,
-            px: 1,
-            ml: level * 1.5,
-            borderRadius: 4,
+            py: TREE_CONFIG.item.padding.vertical,
+            px: TREE_CONFIG.item.padding.horizontal,
+            ml: level * TREE_CONFIG.item.indentation,
+            borderRadius: TREE_CONFIG.item.borderRadius,
             cursor: isDragged ? 'grabbing' : 'pointer',
             transition: 'all 0.2s ease',
-            bgcolor: isDragged ? 'rgba(79, 195, 247, 0.3)' : 
-                     isDropTarget ? 'rgba(76, 175, 80, 0.2)' : 
-                     selectedLayer?.id === warstwa.id ? 'rgba(255, 152, 0, 0.2)' : 'transparent',
-            borderLeft: level > 0 ? '2px solid rgba(255,255,255,0.1)' : 'none',
-            border: isDragged ? '2px dashed #4fc3f7' : 
-                    isDropTarget ? '2px solid #4caf50' : 
-                    selectedLayer?.id === warstwa.id ? '2px solid #ff9800' : 'none',
-            opacity: isDragged ? 0.6 : 1,
-            transform: isDragged ? 'scale(1.02) rotate(2deg)' : 'none',
-            boxShadow: isDragged ? '0 8px 16px rgba(0,0,0,0.3)' : 
-                       isDropTarget ? '0 0 0 2px rgba(76, 175, 80, 0.4)' : 'none',
+            bgcolor: isDragged ? TREE_CONFIG.colors.background.dragged : 
+                     isDropTarget ? TREE_CONFIG.colors.background.dropTarget : 
+                     selectedLayer?.id === warstwa.id ? TREE_CONFIG.colors.background.selected : TREE_CONFIG.colors.background.transparent,
+            borderLeft: level > 0 ? `2px solid ${TREE_CONFIG.colors.border.level}` : 'none',
+            border: isDragged ? `2px dashed ${TREE_CONFIG.colors.border.dragged}` : 
+                    isDropTarget ? `2px solid ${TREE_CONFIG.colors.border.dropTarget}` : 
+                    selectedLayer?.id === warstwa.id ? `2px solid ${TREE_CONFIG.colors.border.selected}` : 'none',
+            opacity: isDragged ? TREE_CONFIG.item.dragStates.opacity.dragged : TREE_CONFIG.item.dragStates.opacity.normal,
+            transform: isDragged ? TREE_CONFIG.item.dragStates.transform.dragged : TREE_CONFIG.item.dragStates.transform.normal,
+            boxShadow: isDragged ? TREE_CONFIG.item.dragStates.boxShadow.dragged : 
+                       isDropTarget ? TREE_CONFIG.item.dragStates.boxShadow.dropTarget : TREE_CONFIG.item.dragStates.boxShadow.normal,
             '&:hover': {
-              bgcolor: isDragged ? 'rgba(79, 195, 247, 0.4)' : 
-                       isDropTarget ? 'rgba(76, 175, 80, 0.3)' : 
-                       'rgba(79, 195, 247, 0.15)',
-              borderLeft: level > 0 ? '2px solid #4fc3f7' : 'none',
-              transform: isDragged ? 'scale(1.02) rotate(2deg)' : 'translateX(4px)',
+              bgcolor: isDragged ? TREE_CONFIG.colors.background.hover.dragged : 
+                       isDropTarget ? TREE_CONFIG.colors.background.hover.dropTarget : 
+                       TREE_CONFIG.colors.background.hover.normal,
+              borderLeft: level > 0 ? `2px solid ${TREE_CONFIG.colors.border.levelHover}` : 'none',
+              transform: isDragged ? TREE_CONFIG.item.dragStates.transform.dragged : TREE_CONFIG.item.dragStates.transform.hover,
               '& .layer-item__actions': {
                 opacity: 1
               },
               '& .drag-handle': {
-                color: '#4fc3f7'
+                color: TREE_CONFIG.colors.text.iconHover
               }
             }
           }}
@@ -233,14 +362,14 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
                 onToggleExpansion(warstwa.id);
               }}
               sx={{
-                width: 16,
-                height: 16,
+                width: TREE_CONFIG.elements.expandButton.size,
+                height: TREE_CONFIG.elements.expandButton.size,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                mr: 0.5,
-                '&:hover': { color: '#4fc3f7' }
+                mr: TREE_CONFIG.elements.expandButton.marginRight,
+                '&:hover': { color: TREE_CONFIG.colors.text.iconHover }
               }}
             >
               <Box
@@ -250,15 +379,19 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
                   borderStyle: 'solid',
                   borderWidth: warstwa.rozwinięta ? '6px 4px 0 4px' : '4px 0 4px 6px',
                   borderColor: warstwa.rozwinięta 
-                    ? 'rgba(255,255,255,0.8) transparent transparent transparent'
-                    : 'transparent transparent transparent rgba(255,255,255,0.8)',
+                    ? `${TREE_CONFIG.colors.indicators.arrow} transparent transparent transparent`
+                    : `transparent transparent transparent ${TREE_CONFIG.colors.indicators.arrow}`,
                   transition: 'all 0.2s ease'
                 }}
               />
             </Box>
           ) : (
             /* Placeholder przestrzeń dla warstw - wyrównanie checkboxów */
-            <Box sx={{ width: 16, height: 16, mr: 0.5 }} />
+            <Box sx={{ 
+              width: TREE_CONFIG.elements.expandButton.size, 
+              height: TREE_CONFIG.elements.expandButton.size, 
+              mr: TREE_CONFIG.elements.expandButton.marginRight 
+            }} />
           )}
           
           <Box
@@ -268,22 +401,22 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
             onChange={() => onToggleVisibility(warstwa.id)}
             onClick={(e: any) => e.stopPropagation()}
             sx={{
-              mr: 1,
+              mr: TREE_CONFIG.elements.checkbox.marginRight,
               cursor: 'pointer',
-              accentColor: '#4fc3f7',
-              width: 16,
-              height: 16,
+              accentColor: TREE_CONFIG.colors.text.iconHover,
+              width: TREE_CONFIG.elements.checkbox.size,
+              height: TREE_CONFIG.elements.checkbox.size,
               '&:checked': {
-                accentColor: '#4fc3f7'
+                accentColor: TREE_CONFIG.colors.text.iconHover
               }
             }}
           />
           
           <Box sx={{ 
-            mr: 1, 
+            mr: TREE_CONFIG.elements.iconContainer.marginRight, 
             display: 'flex', 
             alignItems: 'center',
-            minWidth: 20,
+            minWidth: TREE_CONFIG.elements.iconContainer.minWidth,
             justifyContent: 'center'
           }}>
             {getWarstwaIcon(warstwa.typ, warstwa.id)}
@@ -292,16 +425,16 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
           <Tooltip title={warstwa.nazwa} arrow placement="right">
             <Typography
               sx={{
-                fontSize: '13px',
-                color: warstwa.widoczna ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
+                fontSize: TREE_CONFIG.typography.fontSize,
+                color: warstwa.widoczna ? TREE_CONFIG.colors.text.visible : TREE_CONFIG.colors.text.hidden,
                 flex: 1,
-                fontWeight: warstwa.typ === 'grupa' ? 500 : 400,
-                letterSpacing: '0.2px',
-                fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
-                whiteSpace: 'nowrap',        // Nie zawijaj tekstu
-                overflow: 'hidden',          // Ukryj nadmiar tekstu
-                textOverflow: 'ellipsis',    // Pokaż ... dla przyciętego tekstu
-                cursor: 'pointer'            // Pokaż że można najechać
+                fontWeight: warstwa.typ === 'grupa' ? TREE_CONFIG.typography.fontWeight.group : TREE_CONFIG.typography.fontWeight.layer,
+                letterSpacing: TREE_CONFIG.typography.letterSpacing,
+                fontFamily: TREE_CONFIG.typography.fontFamily,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                cursor: 'pointer'
               }}
             >
               {warstwa.nazwa}
@@ -309,7 +442,7 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
           </Tooltip>
           
           {/* Ikony po prawej stronie jak na screenie */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: TREE_CONFIG.elements.actionButton.gap }}>
             {/* Ikona celownika/GPS */}
             <Tooltip title="Przybliż do warstwy" arrow>
               <IconButton
@@ -319,12 +452,12 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
                   console.log('Zoom to:', warstwa.nazwa);
                 }}
                 sx={{ 
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  p: 0.25,
-                  '&:hover': { color: '#4fc3f7' }
+                  color: TREE_CONFIG.colors.text.icon,
+                  p: TREE_CONFIG.elements.actionButton.padding,
+                  '&:hover': { color: TREE_CONFIG.colors.text.iconHover }
                 }}
               >
-                <ZoomInMapIcon fontSize="small" />
+                <PrzyblizDoWarstwyIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             
@@ -338,9 +471,9 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
                     console.log('Calendar for:', warstwa.nazwa);
                   }}
                   sx={{ 
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    p: 0.25,
-                    '&:hover': { color: '#4fc3f7' }
+                    color: TREE_CONFIG.colors.text.icon,
+                    p: TREE_CONFIG.elements.actionButton.padding,
+                    '&:hover': { color: TREE_CONFIG.colors.text.iconHover }
                   }}
                 >
                   <CalendarTodayIcon fontSize="small" />
@@ -351,7 +484,7 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
         </Box>
         
         {warstwa.dzieci && warstwa.rozwinięta && (
-          <Box sx={{ ml: 1 }}>
+          <Box sx={{ ml: TREE_CONFIG.item.margins.children }}>
             {warstwa.dzieci.map((dziecko: Warstwa) => renderWarstwaItem(dziecko, level + 1))}
             
             {/* Specjalna strefa drop na końcu grupy */}
@@ -361,12 +494,12 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
               onDragOver={onDragOver as any}
               onDrop={(e) => onDropAtEnd(e as any, warstwa.id)}
               sx={{
-                height: draggedItem ? 12 : 4, // Mniejsza wysokość, większa tylko podczas przeciągania
+                height: draggedItem ? TREE_CONFIG.elements.dropZone.height.active : TREE_CONFIG.elements.dropZone.height.inactive,
                 position: 'relative',
                 cursor: draggedItem ? 'copy' : 'default',
                 transition: 'height 0.2s ease',
                 '&:hover': draggedItem ? {
-                  bgcolor: 'rgba(79, 195, 247, 0.05)'
+                  bgcolor: TREE_CONFIG.colors.background.hover.dropZone
                 } : {}
               }}
             >
@@ -375,13 +508,13 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
                 <Box
                   sx={{
                     position: 'absolute',
-                    bottom: 2,
+                    bottom: TREE_CONFIG.elements.dropZone.indicator.bottom,
                     left: 0,
                     right: 0,
-                    height: 3,
-                    bgcolor: '#4fc3f7',
-                    borderRadius: 1.5,
-                    boxShadow: '0 0 6px rgba(79, 195, 247, 0.6)',
+                    height: TREE_CONFIG.elements.dropZone.indicator.height,
+                    bgcolor: TREE_CONFIG.colors.indicators.drop,
+                    borderRadius: TREE_CONFIG.elements.dropZone.indicator.borderRadius,
+                    boxShadow: `0 0 6px ${TREE_CONFIG.colors.indicators.dropGlow}`,
                     animation: 'dropPulse 1.5s infinite',
                     pointerEvents: 'none'
                   }}
@@ -404,17 +537,17 @@ export const LayerTree: React.FC<LayerTreeProps> = ({
         flex: selectedLayer ? '1 1 0%' : 1,
         minHeight: 0,
         overflow: 'auto',
-        p: 1,
-        position: 'relative', // Dla pozycjonowania strefy drop
+        p: TREE_CONFIG.container.padding,
+        position: 'relative',
         '&::-webkit-scrollbar': {
-          width: '6px'
+          width: TREE_CONFIG.container.scrollbar.width
         },
         '&::-webkit-scrollbar-track': {
           bgcolor: 'rgba(255, 255, 255, 0.1)'
         },
         '&::-webkit-scrollbar-thumb': {
           bgcolor: 'rgba(255, 255, 255, 0.3)',
-          borderRadius: '3px'
+          borderRadius: TREE_CONFIG.container.scrollbar.borderRadius
         }
       }}
     >

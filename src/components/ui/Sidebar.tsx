@@ -20,6 +20,38 @@ import { LayerTree } from './LayerTree';
 import { PropertiesPanel } from './PropertiesPanel';
 import { BasemapSelector } from './BasemapSelector';
 
+// ===== KONFIGURACJA WIELKOŚCI I STYLÓW =====
+const SIDEBAR_CONFIG = {
+  // Główne wymiary sidebara
+  sidebar: {
+    width: '320px', // Szerokość sidebara
+    minWidth: '319px', // Minimalna szerokość
+    maxWidth: '600px', // Maksymalna szerokość
+    headerHeight: '50px', // Wysokość nagłówka
+  },
+  
+  // Czcionki i tekst
+  typography: {
+    titleFontSize: '18px', // Rozmiar tytułu sidebara
+    iconSize: '18px', // Rozmiar ikon w nagłówku
+  },
+  
+  // Elementy interfejsu
+  elements: {
+    headerPadding: 2, // Padding nagłówka (2 * 8px = 16px)
+    sectionSpacing: 0, // Odstęp między sekcjami
+  },
+  
+  // Kolory
+  colors: {
+    background: 'rgba(40, 40, 40, 0.95)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    handleColor: 'rgba(255, 255, 255, 0.3)',
+    text: 'white',
+    textSecondary: 'rgba(255, 255, 255, 0.7)',
+  }
+};
+
 export const Sidebar: React.FC<SidebarProps & { 
   onWidthChange?: (width: number) => void;
   onResizeStart?: () => void;
@@ -64,7 +96,7 @@ export const Sidebar: React.FC<SidebarProps & {
   onLayerTreeDragOver,
   onMainLevelDragOver,
   findParentGroup,
-  // Toolbar props
+  // Właściwości paska narzędzi
   onAddInspireDataset,
   onAddNationalLaw,
   onAddLayer,
@@ -77,9 +109,9 @@ export const Sidebar: React.FC<SidebarProps & {
 }) => {
   // Hook do zarządzania szerokością sidebara
   const { width, isResizing, handleMouseDown } = useResizable({
-    initialWidth: sidebarStyles.width,
-    minWidth: 250,
-    maxWidth: 500,
+    initialWidth: parseInt(SIDEBAR_CONFIG.sidebar.width),
+    minWidth: parseInt(SIDEBAR_CONFIG.sidebar.minWidth),
+    maxWidth: parseInt(SIDEBAR_CONFIG.sidebar.maxWidth),
     onResize: onWidthChange,
     onResizeStart: onResizeStart,
     onResizeEnd: onResizeEnd
@@ -93,29 +125,30 @@ export const Sidebar: React.FC<SidebarProps & {
         left: collapsed ? -width : 0,
         height: '100vh',
         width: width,
-        bgcolor: sidebarStyles.background,
+        bgcolor: SIDEBAR_CONFIG.colors.background,
         boxShadow: collapsed ? 'none' : sidebarStyles.boxShadow,
         transition: isResizing ? 'none' : 'left 0.3s ease',
         zIndex: 1200,
-        borderRight: collapsed ? 'none' : sidebarStyles.borderRight,
+        borderRight: collapsed ? 'none' : `1px solid ${SIDEBAR_CONFIG.colors.borderColor}`,
         display: 'flex',
         flexDirection: 'column'
       }}
     >
       {/* Header z tytułem i toolbarem */}
       <Box className="layer-panel__header" sx={{ 
-        p: 2, 
-        borderBottom: sidebarStyles.header.borderBottom,
-        bgcolor: sidebarStyles.header.background,
-        textAlign: 'center'
+        p: SIDEBAR_CONFIG.elements.headerPadding, 
+        borderBottom: `1px solid ${SIDEBAR_CONFIG.colors.borderColor}`,
+        bgcolor: SIDEBAR_CONFIG.colors.background,
+        textAlign: 'center',
+        minHeight: SIDEBAR_CONFIG.sidebar.headerHeight
       }}>
         {/* Tytuł */}
         <Typography 
           variant="h6" 
           sx={{ 
-            color: 'white', 
+            color: SIDEBAR_CONFIG.colors.text, 
             mb: 1, 
-            fontSize: '16px',
+            fontSize: SIDEBAR_CONFIG.typography.titleFontSize,
             fontWeight: 400,
             letterSpacing: '2px',
             textTransform: 'lowercase'
